@@ -1,3 +1,22 @@
+# MORDRA 3.2 — VICTORY CHESTS
+
+Grosse mise à jour de récompense.
+
+## Ajouté
+- Coffre de victoire à la fin de partie.
+- Le meilleur joueur de l'équipe gagnante reçoit un coffre.
+- Coffres : Bronze, Argent, Or, Mythique.
+- Récompenses équilibrées en Éclats de Sang.
+- Petite chance de débloquer un cosmétique.
+- Animation d'ouverture du coffre.
+- Récompense sauvegardée automatiquement.
+
+## Équilibrage
+- Bronze : 20 à 50 Éclats, très fréquent.
+- Argent : 60 à 100 Éclats, rare.
+- Or : 120 à 180 Éclats, très rare, cosmétique garanti.
+- Mythique : 300 à 500 Éclats, extrêmement rare, cosmétique garanti.
+
 # MORDRA 3.1.1 — MODE CLEANUP
 
 Petite mise à jour de logique.

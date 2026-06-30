@@ -110,8 +110,8 @@ function intro(){
   },190);
 }
 
-function startScreen(){ screen(`<div class="start-screen"><div><div class="logo">MORDRA</div><div class="small">Le jeu de déduction horrifique</div><button class="btn start-btn" onclick="home()">DÉMARRER</button><div class="small">Version 3.1.1 Mode Cleanup</div></div></div>`)}
-function home(){ try{clearDiscussionTimer()}catch(e){}  screen(`<div class="card"><div class="logo">MORDRA</div><p class="small" style="text-align:center">Version 3.1.1 Mode Cleanup</p><button class="btn" onclick="modeSelect()">🎮 Nouvelle partie</button><button class="btn secondary" onclick="progression()">🏆 Progression</button><button class="btn secondary" onclick="statsList()">📊 Statistiques</button><button class="btn secondary" onclick="achievementsMenu()">🏅 Succès</button><button class="btn secondary" onclick="collectionSelect()">🎁 Collection</button><button class="btn secondary" onclick="shopHub()">🛒 Boutique</button><button class="btn ghost" onclick="settings()">⚙️ Paramètres</button></div>`);}
+function startScreen(){ screen(`<div class="start-screen"><div><div class="logo">MORDRA</div><div class="small">Le jeu de déduction horrifique</div><button class="btn start-btn" onclick="home()">DÉMARRER</button><div class="small">Version 3.2 Victory Chests</div></div></div>`)}
+function home(){ try{clearDiscussionTimer()}catch(e){}  screen(`<div class="card"><div class="logo">MORDRA</div><p class="small" style="text-align:center">Version 3.2 Victory Chests</p><button class="btn" onclick="modeSelect()">🎮 Nouvelle partie</button><button class="btn secondary" onclick="progression()">🏆 Progression</button><button class="btn secondary" onclick="statsList()">📊 Statistiques</button><button class="btn secondary" onclick="achievementsMenu()">🏅 Succès</button><button class="btn secondary" onclick="collectionSelect()">🎁 Collection</button><button class="btn secondary" onclick="shopHub()">🛒 Boutique</button><button class="btn ghost" onclick="settings()">⚙️ Paramètres</button></div>`);}
 
 function progression(){screen(`<div class="card">${back()}<h1>🏆 Progression</h1><button class="btn secondary" onclick="leaderboard()">🏆 Classement</button><button class="btn secondary" onclick="hall()">🏛️ Hall of Fame</button><button class="btn secondary" onclick="historyList()">📜 Historique</button></div>`)}
 function statsList(){ const ps=allPlayers(); screen(`<div class="card">${back()}<h1>📊 Statistiques</h1><button class="btn" onclick="newPlayer()">➕ Nouveau joueur</button>${ps.length?ps.map(p=>`<div class="listitem" onclick="playerStats('${p.name.replaceAll("'","\\'")}')"><div><b>${p.name}</b><br><span class="small">${p.games} parties • ${p.totalXP} XP • 🩸 ${p.wallet.shards}</span></div><span>›</span></div>`).join(""):`<p class="small">Aucun joueur.</p>`}</div>`)}
@@ -125,7 +125,7 @@ function historyList(){const h=loadHistory().slice().reverse(); screen(`<div cla
 
 
 /* =========================================================
-   MORDRA 3.1.1 — SHADOW MODES
+   MORDRA 3.2 — SHADOW MODES
    Choix du mode avant la partie.
 ========================================================= */
 
@@ -399,7 +399,7 @@ function saveGame(){
   sound("level");
   const newM=mvp()?.name;
   const rewardHtml=rewards.map(r=>`<div class="result-line"><b>${r.win?"🏆":"🎮"} ${r.name}</b><br><span class="small">${r.role==="killer"?"Tueur":"Survivant"} • ${r.win?"Victoire":"Participation"}</span><br><span class="xp">+${r.xp} XP • +${r.shards} 🩸</span>${r.afterLevel>r.beforeLevel?`<br><span class="xp">✨ Niveau ${r.beforeLevel} ➜ ${r.afterLevel}</span>`:""}</div>`).join("");
-  screen(`<div class="card"><h1>Récompenses obtenues 🎁</h1><p class="small">Tout est sauvegardé automatiquement.</p>${rewardHtml}${oldM&&newM&&oldM!==newM?`<div class="mvp-card player-card"><div class="mvp-badge">👑 Nouveau MVP</div><h1>${newM}</h1></div>`:""}<button class="btn" onclick="leaderboard()">Classement</button><button class="btn secondary" onclick="home()">Menu</button></div>`);
+  screen(`<div class="card"><h1>Récompenses obtenues 🎁</h1><p class="small">Tout est sauvegardé automatiquement.</p>${rewardHtml}${oldM&&newM&&oldM!==newM?`<div class="mvp-card player-card"><div class="mvp-badge">👑 Nouveau MVP</div><h1>${newM}</h1></div>`:""}<button class="btn" onclick="showVictoryChest()">🎁 Ouvrir le coffre de victoire</button><button class="btn secondary" onclick="leaderboard()">Classement</button><button class="btn ghost" onclick="home()">Menu</button></div>`);
 }
 
 
@@ -460,7 +460,7 @@ function claimPass(n,l){let p=getPlayer(n); if(p.passClaimed.includes(l))return;
 
 
 /* =========================================================
-   MORDRA 3.1.1 — ACHIEVEMENTS STABLE
+   MORDRA 3.2 — ACHIEVEMENTS STABLE
    Succès uniquement. Ne touche pas au lancement ni aux parties.
 ========================================================= */
 
@@ -661,13 +661,13 @@ function dataSettings(){screen(`<div class="card">${back("settings()")}<h1>💾 
 function exportData(){const data=JSON.stringify({stats:loadStats(),history:loadHistory()},null,2); navigator.clipboard?.writeText(data).then(()=>alert("Copié ✅")).catch(()=>prompt("Copie tes données :",data))}
 function importData(){try{const t=prompt("Colle tes données :"); if(!t)return; const d=JSON.parse(t); if(d.stats)saveStats(d.stats); if(d.history)saveHistory(d.history); home()}catch(e){alert("Import impossible.")}}
 function resetData(){if(confirm("Tout effacer ?")&&confirm("Vraiment tout remettre à zéro ?")){localStorage.removeItem(saveKey);localStorage.removeItem(historyKey);home()}}
-function credits(){screen(`<div class="card">${back("settings()")}<div class="logo">MORDRA</div><p class="small" style="text-align:center">Version 3.1.1 Mode Cleanup</p><div class="listitem"><div><b>AN ORIGINAL GAME BY</b><br>Kevin Moreau</div></div><div class="listitem"><div><b>DEVELOPED WITH THE ASSISTANCE OF</b><br>ChatGPT</div></div></div>`)}
+function credits(){screen(`<div class="card">${back("settings()")}<div class="logo">MORDRA</div><p class="small" style="text-align:center">Version 3.2 Victory Chests</p><div class="listitem"><div><b>AN ORIGINAL GAME BY</b><br>Kevin Moreau</div></div><div class="listitem"><div><b>DEVELOPED WITH THE ASSISTANCE OF</b><br>ChatGPT</div></div></div>`)}
 intro();
 
 
 
 /* =========================================================
-   MORDRA 3.1.1 — REVEAL BUTTON FIX
+   MORDRA 3.2 — REVEAL BUTTON FIX
    Réparation ciblée du bouton Dévoiler.
 ========================================================= */
 
@@ -785,7 +785,7 @@ function discussion(){
 
 
 /* =========================================================
-   MORDRA 3.1.1 — NEW PLAYER FLOW FIX
+   MORDRA 3.2 — NEW PLAYER FLOW FIX
    Corrige ajout joueur depuis Nouvelle Partie.
 ========================================================= */
 
@@ -865,7 +865,7 @@ function quickAddPlayer(){
 
 
 /* =========================================================
-   MORDRA 3.1.1 — DISCUSSION TIMER
+   MORDRA 3.2 — DISCUSSION TIMER
    Compte à rebours pendant la discussion.
 ========================================================= */
 
@@ -971,7 +971,7 @@ function discussion(){
 
 
 /* =========================================================
-   MORDRA 3.1.1 — VERDICT CINEMATIC
+   MORDRA 3.2 — VERDICT CINEMATIC
    Suspense après les votes avant le résultat.
 ========================================================= */
 
@@ -1027,4 +1027,143 @@ function showVerdictCountdown(nextAction){
 
 function showVerdictResultThen(action){
   showVerdictCountdown(action);
+}
+
+
+
+/* =========================================================
+   MORDRA 3.2 — VICTORY CHESTS
+   Coffre équilibré pour le meilleur joueur gagnant.
+========================================================= */
+
+function chestRandom(){
+  return Math.random();
+}
+
+function chooseChestType(){
+  const r = chestRandom();
+  if(r < 0.002) return "mythique";
+  if(r < 0.020) return "or";
+  if(r < 0.100) return "argent";
+  return "bronze";
+}
+
+function chestInfo(type){
+  const infos = {
+    bronze:{name:"Coffre Bronze",icon:"📦",min:20,max:50,cosmetic:0.035,cls:"chest-bronze"},
+    argent:{name:"Coffre Argent",icon:"🧰",min:60,max:100,cosmetic:0.120,cls:"chest-silver"},
+    or:{name:"Coffre Or",icon:"🏆",min:120,max:180,cosmetic:1.000,cls:"chest-gold"},
+    mythique:{name:"Coffre Mythique",icon:"💎",min:300,max:500,cosmetic:1.000,cls:"chest-mythic"}
+  };
+  return infos[type] || infos.bronze;
+}
+
+function randomInt(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function randomChestCosmetic(p, chestType){
+  try{
+    const pool = shopItems.filter(it=>{
+      if(owned(p,it)) return false;
+      if(chestType==="bronze") return ["banner","badge","title"].includes(it.type) && !["Mythique","Légendaire"].includes(it.rarity);
+      if(chestType==="argent") return !["Mythique"].includes(it.rarity);
+      return true;
+    });
+    if(!pool.length) return null;
+    return pool[Math.floor(Math.random()*pool.length)];
+  }catch(e){
+    return null;
+  }
+}
+
+function computeChestReward(playerName){
+  let p = getPlayer(playerName);
+  if(!p) return null;
+  p = normalize(p);
+  const type = chooseChestType();
+  const info = chestInfo(type);
+  const shards = randomInt(info.min, info.max);
+  const reward = {type, info, shards, cosmetic:null};
+
+  if(Math.random() < info.cosmetic){
+    const cos = randomChestCosmetic(p,type);
+    if(cos){
+      reward.cosmetic = cos;
+    }
+  }
+
+  p.wallet.shards += shards;
+  if(reward.cosmetic){
+    give(p,reward.cosmetic);
+  }
+  savePlayer(p);
+  return reward;
+}
+
+function bestWinnerForChest(){
+  if(!state || !state.game) return null;
+  const winners = state.game.players.filter(gp=>{
+    return (gp.role==="killer" && state.game.winner==="killers") ||
+           (gp.role==="survivor" && state.game.winner==="survivors");
+  });
+  if(!winners.length) return null;
+
+  const scored = winners.map(gp=>{
+    const p = getPlayer(gp.name) || defaultPlayer(gp.name);
+    return {name:gp.name, xp:p.totalXP||0, wins:p.wins||0, games:p.games||0};
+  });
+
+  scored.sort((a,b)=>(b.xp-a.xp)||(b.wins-a.wins)||(b.games-a.games));
+  return scored[0].name;
+}
+
+function showVictoryChest(){
+  const winnerName = bestWinnerForChest();
+  if(!winnerName){
+    home();
+    return;
+  }
+
+  const reward = computeChestReward(winnerName);
+  if(!reward){
+    home();
+    return;
+  }
+
+  const info = reward.info;
+  try{ sound("reward"); }catch(e){}
+
+  screen(`<div class="card mobile-center-card chest-screen">
+    <h1>🎁 Coffre de Victoire</h1>
+    <p class="small">${winnerName} reçoit un coffre pour sa performance.</p>
+
+    <div class="chest-box ${info.cls}" id="chestBox">
+      <div class="chest-icon">${info.icon}</div>
+      <b>${info.name}</b>
+    </div>
+
+    <button class="btn" onclick="openVictoryChest('${winnerName.replaceAll("'","\\'")}', '${reward.type}', ${reward.shards}, '${reward.cosmetic ? reward.cosmetic.id : ""}')">Ouvrir</button>
+  </div>`);
+}
+
+function openVictoryChest(winnerName,type,shards,cosmeticId){
+  const info = chestInfo(type);
+  const cosmetic = cosmeticId ? shopItems.find(i=>i.id===cosmeticId) : null;
+  try{ sound("level"); }catch(e){}
+
+  screen(`<div class="card mobile-center-card chest-screen chest-opened">
+    <h1>${info.icon} ${info.name}</h1>
+    <div class="chest-light"></div>
+
+    <div class="result-line">
+      <b>${winnerName}</b><br>
+      <span class="xp">🩸 +${shards} Éclats de Sang</span>
+      ${cosmetic ? `<br><span class="xp">✨ Nouveau cosmétique : ${cosmetic.icon} ${cosmetic.name}</span>` : ""}
+    </div>
+
+    <p class="small">Récompense sauvegardée automatiquement.</p>
+    <button class="btn" onclick="showVictoryChest()">🎁 Ouvrir le coffre de victoire</button><button class="btn secondary" onclick="leaderboard()">Voir le classement</button>
+    <button class="btn secondary" onclick="home()">Menu</button>
+  </div>`);
 }

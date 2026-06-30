@@ -1,5 +1,5 @@
 {
-  "name": "MORDRA 3.1.1 Mode Cleanup",
+  "name": "MORDRA 3.2 Victory Chests",
   "short_name": "MORDRA",
   "start_url": "./index.html",
   "scope": "./",
@@ -24,5 +24,5 @@
       "type": "image/png"
     }
   ],
-  "description": "Nettoyage du menu : le choix du mode contrôle automatiquement le dévoilement."
+  "description": "Coffres de victoire équilibrés pour le meilleur joueur gagnant."
 }
