@@ -1,7 +1,6 @@
 {
-  "name": "MORDRA 1.1.8 Collection",
+  "name": "MORDRA 2.0.1 Shop Hub",
   "short_name": "MORDRA",
-  "description": "Correction complète Collection : cadres et titres visibles depuis le menu principal.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -9,6 +8,11 @@
   "background_color": "#050509",
   "theme_color": "#050509",
   "icons": [
+    {
+      "src": "icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
@@ -18,12 +22,7 @@
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
-    },
-    {
-      "src": "icons/icon-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any maskable"
     }
-  ]
+  ],
+  "description": "Menu Boutique ajouté : Blood Market, boutique tournante, passe et collection rangés ensemble."
 }
