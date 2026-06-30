@@ -440,3 +440,165 @@ body{
 .achievement-locked{
   opacity:.72;
 }
+
+
+.top-back{
+  position:sticky;
+  top:calc(8px + env(safe-area-inset-top));
+  z-index:20;
+  width:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin:0 0 14px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(5,5,9,.72);
+  color:white;
+  font-weight:900;
+  backdrop-filter:blur(12px);
+  box-shadow:0 10px 30px rgba(0,0,0,.28);
+}
+.pass-player-card{
+  position:relative;
+  overflow:hidden;
+  margin:14px 0 16px;
+  padding:22px 14px;
+  border-radius:26px;
+  border:1px solid rgba(255,255,255,.14);
+  text-align:center;
+  box-shadow:0 18px 60px rgba(0,0,0,.35), inset 0 0 34px rgba(255,255,255,.07);
+}
+.pass-player-glow{
+  position:absolute;
+  inset:-40%;
+  background:radial-gradient(circle, rgba(255,255,255,.16), transparent 44%);
+  filter:blur(20px);
+  animation:fog 7s ease-in-out infinite alternate;
+}
+.pass-player-name{
+  position:relative;
+  z-index:1;
+  font-size:32px;
+  font-weight:950;
+  text-shadow:0 0 18px rgba(0,0,0,.65);
+}
+.pass-player-level{
+  position:relative;
+  z-index:1;
+  margin-top:6px;
+  color:var(--gold);
+  font-weight:900;
+}
+.pass-player-card .profile-badges{
+  position:relative;
+  z-index:1;
+}
+.pass-player-card .small{
+  position:relative;
+  z-index:1;
+}
+
+
+.blood-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin:4px 0 18px;
+  padding:14px;
+  border-radius:20px;
+  background:linear-gradient(135deg,rgba(208,31,60,.18),rgba(0,0,0,.28));
+  border:1px solid rgba(208,31,60,.25);
+}
+.blood-header b{display:block;font-size:22px}
+.blood-money{
+  color:var(--gold);
+  font-weight:950;
+  font-size:19px;
+  white-space:nowrap;
+}
+.armory-card{
+  background:
+    radial-gradient(circle at 50% 0%, rgba(208,31,60,.18), transparent 38%),
+    var(--panel);
+}
+.shop-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px;
+  margin:9px 0;
+  border-radius:18px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
+}
+.shop-icon{
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  background:rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.12);
+}
+.shop-icon.big{
+  width:110px;
+  height:110px;
+  margin:18px auto;
+  font-size:62px;
+  border-radius:28px;
+}
+.shop-info{flex:1}
+.rarity-commun{box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.rarity-rare{box-shadow:inset 0 0 0 1px rgba(105,213,140,.25)}
+.rarity-epique{box-shadow:inset 0 0 0 1px rgba(125,156,255,.28)}
+.rarity-legendaire{box-shadow:inset 0 0 0 1px rgba(247,199,93,.32)}
+.rarity-mythique{box-shadow:inset 0 0 0 1px rgba(255,49,87,.42)}
+.purchase-screen{text-align:center}
+.chest-anim{
+  width:140px;
+  height:140px;
+  margin:18px auto;
+  border-radius:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:72px;
+  background:radial-gradient(circle,rgba(247,199,93,.25),rgba(208,31,60,.12));
+  border:1px solid rgba(247,199,93,.28);
+  animation:levelGlow 1s infinite alternate;
+}
+.pass-player-title,.profile-title{
+  position:relative;
+  z-index:1;
+  margin-top:5px;
+  color:var(--gold);
+  font-weight:900;
+}
+.pass-player-frame{
+  position:absolute;
+  inset:8px;
+  border-radius:22px;
+  border:2px solid transparent;
+  font-size:22px;
+  display:flex;
+  justify-content:flex-end;
+  padding:8px;
+  opacity:.95;
+}
+.pass-player-frame.has-frame{
+  border-color:rgba(247,199,93,.55);
+  box-shadow:inset 0 0 20px rgba(247,199,93,.12);
+}
+.profile-has-frame{
+  border:2px solid rgba(247,199,93,.55);
+}
+.profile-frame-icon{
+  font-size:28px;
+  height:30px;
+}

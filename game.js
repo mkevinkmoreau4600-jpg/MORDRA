@@ -13,6 +13,7 @@ let state = {
   timerInterval: null
 };
 
+const GAME_VERSION = "Alpha 1.0.2 — Blood Market";
 const saveKey = "mordra_v03_stats";
 const historyKey = "mordra_v03_history";
 
@@ -190,6 +191,31 @@ function sound(type="tap"){
 document.addEventListener("click", e=>{ if(e.target.closest("button,.listitem,.tab")) sound("menu"); });
 
 function screen(html){ app.innerHTML = `<div class="screen">${html}</div>`; }
+
+function topBack(action="home()", label="Retour"){
+  return `<button class="top-back" onclick="${action}">← ${label}</button>`;
+}
+
+function playerShowcaseCard(name){
+  const p = normalizePlayerStats(loadStats()[name] || {name});
+  const banner = getBanner(p.cosmetics?.banner || "default");
+  const badges = (p.cosmetics?.badges || []).slice(0,3);
+  const frame = getFrame(p.cosmetics?.frame);
+  const title = getTitle(p.cosmetics?.title);
+  return `
+    <div class="pass-player-card" style="background:${banner.css}">
+      <div class="pass-player-glow"></div>
+      <div class="pass-player-frame ${frame ? "has-frame" : ""}">${frame ? frame.icon : ""}</div>
+      <div class="pass-player-name">${name}</div>
+      <div class="pass-player-title">${title ? "⭐ "+title.name : "Sans titre"}</div>
+      <div class="pass-player-level">⭐ Niveau ${levelFromXP(p.totalXP || 0)} • 🩸 ${p.wallet?.shards || 0}</div>
+      <div class="profile-badges">
+        ${badges.length ? badges.map(id=>`<span>${getBadge(id)?.icon || "🏅"}</span>`).join("") : `<span>🩸</span>`}
+      </div>
+      <div class="small">${banner.name}</div>
+    </div>
+  `;
+}
 function showError(message){ const box=document.getElementById("setupError"); if(box){box.textContent=message; box.classList.remove("hidden");} else alert(message); }
 function clearTimer(){ if(state.timerInterval){ clearInterval(state.timerInterval); state.timerInterval=null; } }
 function formatTime(sec){ const m=Math.floor(sec/60).toString().padStart(2,"0"); const s=Math.floor(sec%60).toString().padStart(2,"0"); return `${m}:${s}`; }
@@ -235,7 +261,7 @@ function startScreen(){
       <div class="intro-fog"></div>
       <div class="start-logo-wrap">
         <div class="start-logo">MORDRA</div>
-        <div class="start-subtitle">The Hunt Begins</div>
+        <div class="start-subtitle">Blood Market Alpha</div>
         <div class="start-pulse"></div>
         <button class="btn start-btn" onclick="home()">Démarrer</button>
         <p class="small">Ne fais confiance à personne. Remets tout en question. Survis.</p>
@@ -288,17 +314,83 @@ function introScreen(){
   }, 7600);
 }
 
+
+
+// Blood Market extension
+cosmetics.frames = cosmetics.frames || [
+  {id:"bronze", name:"Cadre Bronze", rarity:"Commun", price:700, icon:"🟫"},
+  {id:"silver", name:"Cadre Argent", rarity:"Rare", price:2500, icon:"⬜"},
+  {id:"gold_frame", name:"Cadre Or", rarity:"Épique", price:8000, icon:"🟨"},
+  {id:"diamond", name:"Cadre Diamant", rarity:"Légendaire", price:25000, icon:"💎"},
+  {id:"obsidian_frame", name:"Cadre Obsidienne", rarity:"Mythique", price:70000, icon:"⚫"}
+];
+cosmetics.titles = cosmetics.titles || [
+  {id:"survivor", name:"Le Survivant", rarity:"Commun", price:600},
+  {id:"hunter", name:"Le Chasseur", rarity:"Rare", price:1800},
+  {id:"ghost_title", name:"Le Fantôme", rarity:"Épique", price:6000},
+  {id:"reaper", name:"Le Faucheur", rarity:"Légendaire", price:18000},
+  {id:"black_king", name:"Le Roi Noir", rarity:"Mythique", price:80000}
+];
+cosmetics.banners.forEach((b,i)=>{ b.price ??= i===0?0:[800,1200,2000,4500,7500,15000,60000,6500,20000][i] || 3000; b.rarity ??= i<2?"Commun":i<5?"Rare":i<7?"Épique":i<9?"Légendaire":"Mythique"; });
+cosmetics.badges.forEach((b,i)=>{ b.price ??= [500,900,900,1200,3200,12000,1500,5000,5500,14000][i] || 1000; b.rarity ??= i<3?"Commun":i<6?"Rare":i<8?"Épique":"Légendaire"; });
+
+function getShopItems(){
+  return [
+    ...cosmetics.banners.map(x=>({...x,type:"banner"})),
+    ...cosmetics.badges.map(x=>({...x,type:"badge"})),
+    ...cosmetics.frames.map(x=>({...x,type:"frame"})),
+    ...cosmetics.titles.map(x=>({...x,type:"title"}))
+  ];
+}
+function getFrame(id){ return cosmetics.frames.find(f=>f.id===id); }
+function getTitle(id){ return cosmetics.titles.find(t=>t.id===id); }
+function ensureBloodMarket(p){
+  p.cosmetics ??= {};
+  p.cosmetics.banner ??= "default";
+  p.cosmetics.badges ??= [];
+  p.cosmetics.frame ??= null;
+  p.cosmetics.title ??= null;
+  p.wallet ??= {};
+  p.wallet.shards ??= 0;
+  p.inventory ??= {};
+  p.inventory.banners ??= ["default"];
+  p.inventory.badges ??= [];
+  p.inventory.frames ??= [];
+  p.inventory.titles ??= [];
+  return p;
+}
+const oldEnsureCosmetics = ensureCosmetics;
+ensureCosmetics = function(p){ return ensureBloodMarket(oldEnsureCosmetics(p)); };
+function hasItem(p,item){
+  p=ensureCosmetics(p);
+  if(item.type==="banner") return p.inventory.banners.includes(item.id);
+  if(item.type==="badge") return p.inventory.badges.includes(item.id);
+  if(item.type==="frame") return p.inventory.frames.includes(item.id);
+  if(item.type==="title") return p.inventory.titles.includes(item.id);
+  return false;
+}
+function giveItem(p,item){
+  p=ensureCosmetics(p);
+  const map={banner:"banners", badge:"badges", frame:"frames", title:"titles"};
+  const key=map[item.type];
+  if(key && !p.inventory[key].includes(item.id)) p.inventory[key].push(item.id);
+  return p;
+}
+function getRarityClass(r){ return "rarity-"+String(r||"Commun").toLowerCase().replace("é","e").replace("è","e").replace(" ","-"); }
+function shardsFromXP(xp){ return Math.max(10, Math.round((xp||0)*0.18)); }
+
 function home(){
   clearTimer();
   screen(`
     <div class="logo">MORDRA</div>
-    <div class="tagline">The Hunt Update — v0.3.0</div>
+    <div class="tagline">Alpha 1.0.2 — Blood Market</div>
     <div class="card">
       <button class="btn" onclick="newGame()">▶️ Nouvelle partie</button>
       <button class="btn secondary" onclick="leaderboard()">🏆 Classement</button>
       <button class="btn secondary" onclick="statsList()">📊 Statistiques</button>
       <button class="btn secondary" onclick="achievementsList()">🏅 Succès</button>
       <button class="btn secondary" onclick="collectionList()">🎁 Collection</button>
+      <button class="btn secondary" onclick="armorySelectPlayer()">🩸 Armurerie</button>
       <button class="btn secondary" onclick="historyList()">📜 Historique</button>
       <button class="btn secondary" onclick="credits()">🎬 Crédits</button>
       <button class="btn ghost" onclick="settings()">⚙️ Paramètres</button>
@@ -373,7 +465,7 @@ function revealPass(){
   const alive=aliveIndexList();
   if(state.current>=alive.length){ discussion(); return; }
   const idx=alive[state.current]; const p=playerByIndex(idx);
-  screen(`<div class="card"><h1>Passe le téléphone</h1><p class="small">Donne le téléphone à :</p><h2>${p.name}</h2>${playerLevelCard(p.name)}<p class="small">Cache bien l'écran avant d'appuyer.</p><button class="btn" onclick="showRole()">Voir mon rôle</button></div>`);
+  screen(`<div class="card"><h1>Passe le téléphone</h1><p class="small">Donne le téléphone à :</p>${playerShowcaseCard(p.name)}${playerLevelCard(p.name)}<p class="small">Cache bien l'écran avant d'appuyer.</p><button class="btn" onclick="showRole()">Voir mon rôle</button></div>`);
 }
 function showRole(){
   sound("reveal"); // même son pour Tueur et Survivant
@@ -408,7 +500,7 @@ function votePass(){
   const alive=aliveIndexList();
   if(state.current>=alive.length){ voteResults(); return; }
   const idx=alive[state.current], p=playerByIndex(idx);
-  screen(`<div class="card"><h1>Vote secret</h1><p class="small">Passe le téléphone à :</p><h2>${p.name}</h2>${playerLevelCard(p.name)}<p class="small">Il doit voter en cachant l'écran.</p><button class="btn" onclick="voteScreen()">Voter</button></div>`);
+  screen(`<div class="card"><h1>Vote secret</h1><p class="small">Passe le téléphone à :</p>${playerShowcaseCard(p.name)}${playerLevelCard(p.name)}<p class="small">Il doit voter en cachant l'écran.</p><button class="btn" onclick="voteScreen()">Voter</button></div>`);
 }
 function voteScreen(){
   const voterIdx=aliveIndexList()[state.current];
@@ -518,13 +610,17 @@ function saveGame(){
   if(history.find(h=>h.id===state.game.id)) return alert("Cette partie est déjà enregistrée.");
   const levelUps=[];
   const achievementUps=[];
+  const bloodShardUps=[];
   state.game.players.forEach((gp,i)=>{
     const p=ensurePlayer(stats,gp.name);
     const before=clonePlayerStats(p);
     const beforeAch=getUnlockedAchievements(before).map(a=>a.id);
     const res=calcXP(i,state.game.winner);
     const killer=gp.role==="killer";
+    const shardsGain = shardsFromXP(res.xp) + (state.game.winner === (killer ? "killers" : "survivors") ? 25 : 0);
     const won=killer?state.game.winner==="killers":state.game.winner==="survivors";
+    p.wallet.shards += shardsGain;
+    bloodShardUps.push({name:gp.name, shards:shardsGain});
     p.games++; p.totalXP+=res.xp; won?p.wins++:p.losses++; p.streak=won?p.streak+1:0; p.bestStreak=Math.max(p.bestStreak||0,p.streak||0);
     if(killer){
       p.killer.games++; p.killer.xp+=res.xp; won?p.killer.wins++:p.killer.losses++;
@@ -548,25 +644,26 @@ function saveGame(){
   if(levelUps.length) setTimeout(()=>sound("levelup"),120); else sound("good");
   const levelHtml=levelUps.length?`<div class="levelup-panel"><h2>✨ Passages de niveau</h2><p class="small">${levelUps.length} joueur${levelUps.length>1?"s":""} ont gagné au moins un niveau.</p>${levelUps.map(item=>`<div class="result-line levelup-line"><b>${item.name}</b><br>${item.ups.map(up=>`<span class="xp">${up}</span>`).join("<br>")}</div>`).join("")}</div>`:"";
   const achHtml=achievementUps.length?`<div class="levelup-panel"><h2>🏅 Succès débloqués</h2>${achievementUps.map(item=>`<div class="result-line levelup-line"><b>${item.name}</b><br>${item.ach.map(a=>`<span class="xp">🏆 ${a.name}</span>`).join("<br>")}</div>`).join("")}</div>`:"";
-  screen(`<div class="card"><h1>Stats enregistrées ✅</h1><p class="small">La partie a été ajoutée à l'historique.</p>${levelHtml}${achHtml}<button class="btn" onclick="leaderboard()">Voir le classement</button><button class="btn secondary" onclick="home()">Menu</button></div>`);
+  const shardHtml=bloodShardUps.length?`<div class="levelup-panel"><h2>🩸 Éclats de Sang gagnés</h2>${bloodShardUps.map(item=>`<div class="result-line levelup-line"><b>${item.name}</b><br><span class="xp">+${item.shards} 🩸</span></div>`).join("")}</div>`:"";
+  screen(`<div class="card"><h1>Stats enregistrées ✅</h1><p class="small">La partie a été ajoutée à l'historique.</p>${levelHtml}${achHtml}${shardHtml}<button class="btn" onclick="leaderboard()">Voir le classement</button><button class="btn secondary" onclick="home()">Menu</button></div>`);
 }
 
 function leaderboard(){
   const stats=Object.values(loadStats()).map(normalizePlayerStats).sort((a,b)=>b.totalXP-a.totalXP);
   const lines=stats.length?stats.map((p,i)=>`<div class="listitem" onclick="playerStats('${p.name.replaceAll("'","\\'")}')"><div><b>${i+1}. ${p.name}</b><br><span class="small">Niv. ${levelFromXP(p.totalXP)} • ${p.games} parties</span></div><span class="badge">${p.totalXP} XP</span></div>`).join(""):`<p class="small">Aucune partie enregistrée.</p>`;
-  screen(`<div class="card"><h1>🏆 Classement</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('home()')}<h1>🏆 Classement</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
 }
 function statsList(){
   const stats=Object.values(loadStats()).map(normalizePlayerStats).sort((a,b)=>a.name.localeCompare(b.name));
   const lines=stats.length?stats.map(p=>`<div class="listitem" onclick="playerStats('${p.name.replaceAll("'","\\'")}')"><div><b>${p.name}</b><br><span class="small">${p.games} parties • ${p.totalXP} XP</span></div><span>›</span></div>`).join(""):`<p class="small">Aucun joueur enregistré.</p>`;
-  screen(`<div class="card"><h1>📊 Statistiques</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('home()')}<h1>📊 Statistiques</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
 }
 function playerStats(name,tab="survivor"){
   const p=normalizePlayerStats(loadStats()[name]); if(!p)return statsList();
   const isS=tab==="survivor", data=isS?p.survivor:p.killer;
   const lvl=levelFromXP(data.xp), rank=isS?survivorRank(lvl):killerRank(lvl);
   const winrate=data.games?Math.round((data.wins/data.games)*100):0;
-  screen(`<div class="card"><div class="profile-banner" style="background:${getBanner(p.cosmetics.banner).css}"><h1>${p.name}</h1><div class="profile-badges">${(p.cosmetics.badges||[]).slice(0,3).map(id=>`<span>${getBadge(id)?.icon||"🏅"}</span>`).join("")}</div></div>${xpCard(p.totalXP,"Niveau général","⭐")}<p class="small">🔥 Série générale : ${p.streak} • Record général : ${p.bestStreak}</p>
+  screen(`<div class="card">${topBack('statsList()')}<div class="profile-banner ${p.cosmetics.frame?'profile-has-frame':''}" style="background:${getBanner(p.cosmetics.banner).css}"><div class="profile-frame-icon">${getFrame(p.cosmetics.frame)?.icon || ""}</div><h1>${p.name}</h1><div class="profile-title">${getTitle(p.cosmetics.title)?.name || "Sans titre"}</div><div class="profile-badges">${(p.cosmetics.badges||[]).slice(0,3).map(id=>`<span>${getBadge(id)?.icon||"🏅"}</span>`).join("")}</div></div>${xpCard(p.totalXP,"Niveau général","⭐")}<p class="small">🔥 Série générale : ${p.streak} • Record général : ${p.bestStreak}</p>
     <div class="tabs"><button class="tab ${isS?"active":""}" onclick="playerStats('${name.replaceAll("'","\\'")}','survivor')">🛡️ Survivant</button><button class="tab ${!isS?"active":""}" onclick="playerStats('${name.replaceAll("'","\\'")}','killer')">🔪 Tueur</button></div>
     ${xpCard(data.xp,isS?"Niveau Survivant":"Niveau Tueur",isS?"🛡️":"🔪",rank)}
     <div class="statbox"><div class="stat"><span class="small">Parties</span><b>${data.games}</b></div><div class="stat"><span class="small">Victoires</span><b>${data.wins}</b></div><div class="stat"><span class="small">Défaites</span><b>${data.losses}</b></div><div class="stat"><span class="small">Winrate</span><b>${winrate}%</b></div>
@@ -575,13 +672,115 @@ function playerStats(name,tab="survivor"){
     <button class="btn ghost" onclick="statsList()">Retour stats</button></div>`);
 }
 
+
+function armorySelectPlayer(){
+  const stats=Object.values(loadStats()).map(normalizePlayerStats).sort((a,b)=>a.name.localeCompare(b.name));
+  const lines=stats.length?stats.map(p=>`
+    <div class="listitem" onclick="armoryHome('${p.name.replaceAll("'","\\'")}')">
+      <div><b>${p.name}</b><br><span class="small">🩸 ${p.wallet?.shards || 0} Éclats de Sang</span></div><span>›</span>
+    </div>`).join(""):`<p class="small">Aucun joueur enregistré. Joue une partie pour créer des joueurs.</p>`;
+  screen(`<div class="card">${topBack('home()')}<h1>🩸 Armurerie des Ombres</h1><p class="small">Choisis le joueur qui entre dans le Blood Market.</p>${lines}</div>`);
+}
+function armoryHeader(p){
+  return `<div class="blood-header">
+    <div><span class="small">Blood Market</span><b>${p.name}</b></div>
+    <div class="blood-money">🩸 ${p.wallet?.shards || 0}</div>
+  </div>`;
+}
+function armoryHome(name){
+  const p=normalizePlayerStats(loadStats()[name]); if(!p)return armorySelectPlayer();
+  screen(`<div class="card armory-card">${topBack('home()')}
+    ${armoryHeader(p)}
+    <h1>🩸 Blood Market</h1>
+    <p class="small">Achète des objets cosmétiques avec tes Éclats de Sang. Aucun objet ne donne d'avantage en partie.</p>
+    <button class="btn" onclick="shop('${name.replaceAll("'","\\'")}','all')">🛒 Boutique</button>
+    <button class="btn secondary" onclick="chests('${name.replaceAll("'","\\'")}')">🎁 Coffres</button>
+    <button class="btn secondary" onclick="shadowPass('${name.replaceAll("'","\\'")}')">🛡️ Passe des Ombres</button>
+    <button class="btn secondary" onclick="playerCollection('${name.replaceAll("'","\\'")}')">🎨 Collection</button>
+    <div class="result-line"><b>Offre du jour</b><br><span class="small">Bannière Galaxy — promo prototype</span><br><span class="xp">15 000 ➜ 9 500 🩸</span></div>
+  </div>`);
+}
+function shop(name,filter="all"){
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]); if(!p)return armorySelectPlayer();
+  const types=[["all","Tout"],["banner","Bannières"],["badge","Badges"],["frame","Cadres"],["title","Titres"]];
+  const items=getShopItems().filter(i=>filter==="all"||i.type===filter);
+  const tabs=`<div class="tabs">${types.slice(0,3).map(t=>`<button class="tab ${filter===t[0]?"active":""}" onclick="shop('${name.replaceAll("'","\\'")}','${t[0]}')">${t[1]}</button>`).join("")}</div>
+  <div class="tabs">${types.slice(3).map(t=>`<button class="tab ${filter===t[0]?"active":""}" onclick="shop('${name.replaceAll("'","\\'")}','${t[0]}')">${t[1]}</button>`).join("")}</div>`;
+  const html=items.map(item=>{
+    const owned=hasItem(p,item);
+    const afford=(p.wallet?.shards||0)>=item.price;
+    const icon=item.icon || (item.type==="banner"?"🖼️":item.type==="frame"?"👑":"⭐");
+    const price=item.id==="galaxy" ? 9500 : item.price;
+    return `<div class="shop-item ${getRarityClass(item.rarity)}">
+      <div class="shop-icon">${icon}</div>
+      <div class="shop-info"><b>${item.name}</b><br><span class="small">${item.rarity} • ${item.type}</span><br><span class="xp">🩸 ${price}</span></div>
+      <button class="mini-btn" ${owned?"disabled":""} onclick="buyItem('${name.replaceAll("'","\\'")}','${item.type}','${item.id}')">${owned?"Déjà":"Acheter"}</button>
+    </div>`;
+  }).join("");
+  screen(`<div class="card">${topBack(`armoryHome('${name.replaceAll("'","\\'")}')`)}${armoryHeader(p)}<h1>🛒 Boutique</h1>${tabs}${html}</div>`);
+}
+function findItem(type,id){ return getShopItems().find(i=>i.type===type && i.id===id); }
+function buyItem(name,type,id){
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]); const item=findItem(type,id); if(!item)return;
+  const price=id==="galaxy"?9500:item.price;
+  if(hasItem(p,item)) return alert("Objet déjà débloqué.");
+  if((p.wallet?.shards||0)<price) return alert("Pas assez d'Éclats de Sang.");
+  if(!confirm(`Acheter ${item.name} pour ${price} Éclats de Sang ?`)) return;
+  p.wallet.shards-=price;
+  giveItem(p,item);
+  stats[name]=p; saveStats(stats);
+  sound("levelup");
+  screen(`<div class="card purchase-screen">
+    <h1>🩸 Nouvel objet</h1>
+    <div class="shop-icon big">${item.icon || (item.type==="banner"?"🖼️":item.type==="frame"?"👑":"⭐")}</div>
+    <h2>${item.name}</h2>
+    <p class="xp">${item.rarity}</p>
+    <button class="btn" onclick="shop('${name.replaceAll("'","\\'")}','${type}')">Retour boutique</button>
+    <button class="btn secondary" onclick="playerCollection('${name.replaceAll("'","\\'")}')">Équiper maintenant</button>
+  </div>`);
+}
+function chests(name){
+  const p=normalizePlayerStats(loadStats()[name]); if(!p)return armorySelectPlayer();
+  const defs=[
+    {id:"common",name:"Coffre Commun",price:1000,rarity:"Commun"},
+    {id:"rare",name:"Coffre Rare",price:5000,rarity:"Rare"},
+    {id:"epic",name:"Coffre Épique",price:15000,rarity:"Épique"},
+    {id:"mythic",name:"Coffre Mythique",price:50000,rarity:"Mythique"}
+  ];
+  const html=defs.map(c=>`<div class="shop-item ${getRarityClass(c.rarity)}"><div class="shop-icon">🎁</div><div class="shop-info"><b>${c.name}</b><br><span class="small">${c.rarity}</span><br><span class="xp">🩸 ${c.price}</span></div><button class="mini-btn" onclick="openChest('${name.replaceAll("'","\\'")}','${c.id}')">Ouvrir</button></div>`).join("");
+  screen(`<div class="card">${topBack(`armoryHome('${name.replaceAll("'","\\'")}')`)}${armoryHeader(p)}<h1>🎁 Coffres</h1><p class="small">Prototype : chaque coffre donne un objet non possédé si possible.</p>${html}</div>`);
+}
+function openChest(name,chestId){
+  const prices={common:1000,rare:5000,epic:15000,mythic:50000};
+  const allowed={common:["Commun","Rare"],rare:["Rare","Épique"],epic:["Épique","Légendaire"],mythic:["Légendaire","Mythique"]};
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]); const price=prices[chestId]||1000;
+  if((p.wallet?.shards||0)<price) return alert("Pas assez d'Éclats de Sang.");
+  let pool=getShopItems().filter(i=>allowed[chestId].includes(i.rarity) && !hasItem(p,i));
+  if(!pool.length) pool=getShopItems().filter(i=>!hasItem(p,i));
+  if(!pool.length) return alert("Tu as déjà tout débloqué.");
+  const item=pool[Math.floor(Math.random()*pool.length)];
+  p.wallet.shards-=price; giveItem(p,item); stats[name]=p; saveStats(stats); sound("levelup");
+  screen(`<div class="card purchase-screen"><h1>🎁 Coffre ouvert</h1><div class="chest-anim">🎁</div><h2>${item.name}</h2><p class="xp">${item.rarity}</p><p class="small">Objet ajouté à ta collection.</p><button class="btn" onclick="chests('${name.replaceAll("'","\\'")}')">Ouvrir un autre coffre</button><button class="btn secondary" onclick="playerCollection('${name.replaceAll("'","\\'")}')">Voir collection</button></div>`);
+}
+function shadowPass(name){
+  const p=normalizePlayerStats(loadStats()[name]); if(!p)return armorySelectPlayer();
+  const passXP=Math.floor((p.totalXP||0)/2);
+  const lvl=Math.min(100, Math.floor(passXP/250)+1);
+  const progress=passXP%250;
+  screen(`<div class="card">${topBack(`armoryHome('${name.replaceAll("'","\\'")}')`)}${armoryHeader(p)}<h1>🛡️ Passe des Ombres</h1><p class="small">Prototype gratuit : le passe avance avec ton XP général.</p>
+    <div class="level-card"><div class="level-head"><div><span class="small">Niveau du Passe</span><b>Niveau ${lvl}/100</b></div><span class="badge">${passXP} XP</span></div><div class="level-bar"><div style="width:${Math.round((progress/250)*100)}%"></div></div><div class="xp-line"><b>${progress} / 250 XP</b></div></div>
+    <div class="result-line"><b>Récompense niveau ${lvl+1}</b><br><span class="small">🩸 Éclats de Sang + objet cosmétique selon le niveau.</span></div>
+    <div class="result-line"><b>Important</b><br><span class="small">Le Passe des Ombres sera enrichi dans les prochaines mises à jour.</span></div>
+  </div>`);
+}
+
 function achievementsList(){
   const stats=Object.values(loadStats()).map(normalizePlayerStats).sort((a,b)=>a.name.localeCompare(b.name));
   const lines=stats.length?stats.map(p=>{
     const rewards=getUnlockedRewards(p);
     return `<div class="listitem" onclick="playerAchievements('${p.name.replaceAll("'","\\'")}')"><div><b>${p.name}</b><br><span class="small">${rewards.unlocked.length} / ${achievements.length} succès</span></div><span>›</span></div>`;
   }).join(""):`<p class="small">Aucun joueur enregistré.</p>`;
-  screen(`<div class="card"><h1>🏅 Succès</h1><p class="small">Choisis un joueur pour voir ses défis, récompenses, bannières et badges.</p>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('home()')}<h1>🏅 Succès</h1><p class="small">Choisis un joueur pour voir ses défis, récompenses, bannières et badges.</p>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
 }
 function playerAchievements(name,cat="Tous"){
   const p=normalizePlayerStats(loadStats()[name]); if(!p)return achievementsList();
@@ -598,12 +797,12 @@ function playerAchievements(name,cat="Tous"){
       <span class="xp">Récompense : ${a.reward?.banner?"🖼️ Bannière ":""}${a.reward?.badge?"🏅 Badge ":""}${a.reward?.shards?`🩸 ${a.reward.shards} éclats`:""}</span>
     </div>`;
   }).join("");
-  screen(`<div class="card"><h1>🏅 ${name}</h1><p class="small">${rewards.unlocked.length} / ${achievements.length} succès débloqués • 🩸 ${rewards.shards} éclats gagnés</p>${tabs}${lines}<button class="btn ghost" onclick="achievementsList()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('achievementsList()')}<h1>🏅 ${name}</h1><p class="small">${rewards.unlocked.length} / ${achievements.length} succès débloqués • 🩸 ${rewards.shards} éclats gagnés</p>${tabs}${lines}<button class="btn ghost" onclick="achievementsList()">Retour</button></div>`);
 }
 function collectionList(){
   const stats=Object.values(loadStats()).map(normalizePlayerStats).sort((a,b)=>a.name.localeCompare(b.name));
   const lines=stats.length?stats.map(p=>`<div class="listitem" onclick="playerCollection('${p.name.replaceAll("'","\\'")}')"><div><b>${p.name}</b><br><span class="small">Bannières, badges et profil</span></div><span>›</span></div>`).join(""):`<p class="small">Aucun joueur enregistré.</p>`;
-  screen(`<div class="card"><h1>🎁 Collection</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('home()')}<h1>🎁 Collection</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
 }
 function playerCollection(name){
   const stats=loadStats(); const p=normalizePlayerStats(stats[name]); if(!p)return collectionList();
@@ -617,7 +816,7 @@ function playerCollection(name){
     const equipped=(p.cosmetics.badges||[]).includes(b.id);
     return `<button class="btn ${equipped?"":"secondary"}" ${unlocked?"":"disabled"} onclick="toggleBadge('${name.replaceAll("'","\\'")}','${b.id}')">${b.icon} ${b.name} ${equipped?"✅":unlocked?"":"🔒"}</button>`;
   }).join("");
-  screen(`<div class="card">
+  screen(`<div class="card">${topBack('collectionList()')}
     <div class="profile-banner" style="background:${getBanner(p.cosmetics.banner).css}">
       <h1>${p.name}</h1>
       <div class="profile-badges">${(p.cosmetics.badges||[]).slice(0,3).map(id=>`<span>${getBadge(id)?.icon||"🏅"}</span>`).join("")}</div>
@@ -625,6 +824,8 @@ function playerCollection(name){
     <p class="small">Débloqué : ${rewards.banners.length}/${cosmetics.banners.length} bannières • ${rewards.badges.length}/${cosmetics.badges.length} badges</p>
     <h2>🖼️ Bannières</h2>${bannerButtons}
     <h2>🏅 Badges affichés</h2><p class="small">Tu peux équiper jusqu'à 3 badges.</p>${badgeButtons}
+    <h2>👑 Cadres</h2>${(cosmetics.frames||[]).map(f=>`<button class="btn ${(p.cosmetics.frame===f.id)?"":"secondary"}" ${(p.inventory.frames||[]).includes(f.id)?"":"disabled"} onclick="equipFrame('${name.replaceAll("'","\\'")}','${f.id}')">${f.icon} ${f.name} ${(p.inventory.frames||[]).includes(f.id)?"":"🔒"}</button>`).join("")}
+    <h2>⭐ Titres</h2>${(cosmetics.titles||[]).map(t=>`<button class="btn ${(p.cosmetics.title===t.id)?"":"secondary"}" ${(p.inventory.titles||[]).includes(t.id)?"":"disabled"} onclick="equipTitle('${name.replaceAll("'","\\'")}','${t.id}')">⭐ ${t.name} ${(p.inventory.titles||[]).includes(t.id)?"":"🔒"}</button>`).join("")}
     <button class="btn ghost" onclick="collectionList()">Retour</button>
   </div>`);
 }
@@ -633,6 +834,19 @@ function equipBanner(name,bannerId){
   if(!rewards.banners.includes(bannerId)) return;
   p.cosmetics.banner=bannerId; stats[name]=p; saveStats(stats); playerCollection(name);
 }
+function equipFrame(name,frameId){
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]);
+  if(!(p.inventory.frames||[]).includes(frameId)) return;
+  p.cosmetics.frame = p.cosmetics.frame===frameId ? null : frameId;
+  stats[name]=p; saveStats(stats); playerCollection(name);
+}
+function equipTitle(name,titleId){
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]);
+  if(!(p.inventory.titles||[]).includes(titleId)) return;
+  p.cosmetics.title = p.cosmetics.title===titleId ? null : titleId;
+  stats[name]=p; saveStats(stats); playerCollection(name);
+}
+
 function toggleBadge(name,badgeId){
   const stats=loadStats(); const p=normalizePlayerStats(stats[name]); const rewards=getUnlockedRewards(p);
   if(!rewards.badges.includes(badgeId)) return;
@@ -649,20 +863,20 @@ function toggleBadge(name,badgeId){
 function historyList(){
   const h=loadHistory().slice().reverse();
   const lines=h.length?h.map((g,i)=>`<div class="listitem" onclick="historyDetail('${g.id}')"><div><b>${new Date(g.date).toLocaleString("fr-FR")}</b><br><span class="small">${g.players.length} joueurs • ${g.winner==="survivors"?"Survivants":"Tueurs"} gagnent</span></div><span>›</span></div>`).join(""):`<p class="small">Aucune partie enregistrée.</p>`;
-  screen(`<div class="card"><h1>📜 Historique</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('home()')}<h1>📜 Historique</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
 }
 function historyDetail(id){
   const g=loadHistory().find(x=>x.id===id); if(!g)return historyList();
   const players=g.players.map(p=>`<div class="result-line"><b>${p.name}</b> — ${p.role==="killer"?"🔪 Tueur":"🛡️ Survivant"} — ${p.alive?"Vivant":"Éliminé tour "+p.eliminatedRound}</div>`).join("");
   const log=(g.log||[]).map(l=>`<div class="result-line"><span class="small">Tour ${l.round}</span><br>${l.text}</div>`).join("");
-  screen(`<div class="card"><h1>📜 Détail partie</h1><p class="small">${new Date(g.date).toLocaleString("fr-FR")}</p><h2>${g.winner==="survivors"?"🛡️ Survivants gagnent":"🔪 Tueurs gagnent"}</h2><h3>Joueurs</h3>${players}<h3>Journal</h3><div class="logbox">${log}</div><button class="btn ghost" onclick="historyList()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('historyList()')}<h1>📜 Détail partie</h1><p class="small">${new Date(g.date).toLocaleString("fr-FR")}</p><h2>${g.winner==="survivors"?"🛡️ Survivants gagnent":"🔪 Tueurs gagnent"}</h2><h3>Joueurs</h3>${players}<h3>Journal</h3><div class="logbox">${log}</div><button class="btn ghost" onclick="historyList()">Retour</button></div>`);
 }
 
 function credits(){
   screen(`
-    <div class="card credits-card">
+    <div class="card credits-card">${topBack('home()')}
       <div class="intro-logo credits-logo">MORDRA</div>
-      <p class="small">Prototype v0.3.1 — The Hunt Update</p>
+      <p class="small">Alpha 1.0.2 — Blood Market</p>
 
       <div class="result-line">
         <span class="small">CREATOR</span><br>
@@ -692,6 +906,6 @@ function credits(){
 }
 
 function settings(){
-  screen(`<div class="card"><h1>⚙️ Paramètres</h1><p class="small">v0.3 utilise une nouvelle sauvegarde pour éviter les conflits avec l'ancien prototype.</p><button class="btn secondary" onclick="if(confirm('Effacer toutes les stats v0.3 ?')){localStorage.removeItem('${saveKey}');localStorage.removeItem('${historyKey}');home()}">Effacer les stats v0.3</button><button class="btn ghost" onclick="home()">Retour</button></div>`);
+  screen(`<div class="card">${topBack('home()')}<h1>⚙️ Paramètres</h1><p class="small">MORDRA 1.0 Alpha utilise une sauvegarde locale pour éviter les conflits avec l'ancien prototype.</p><button class="btn secondary" onclick="if(confirm('Effacer toutes les stats 1.0 Alpha ?')){localStorage.removeItem('${saveKey}');localStorage.removeItem('${historyKey}');home()}">Effacer les stats 1.0 Alpha</button><button class="btn ghost" onclick="home()">Retour</button></div>`);
 }
 introScreen();
