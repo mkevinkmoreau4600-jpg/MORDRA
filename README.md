@@ -1,3 +1,140 @@
+# MORDRA 1.1.8 — FULL COLLECTION FIX
+
+Correction complète.
+
+## Corrigé
+- Le bouton Collection du menu principal ouvre maintenant la vraie collection complète.
+- L'ancienne collection qui masquait les Cadres/Titres est remplacée.
+- Les Cadres et Titres apparaissent même s'ils sont verrouillés.
+- Ajout de raccourcis Cadres/Titres en haut de la collection.
+
+# MORDRA 1.1.7 — COLLECTION FIX
+
+Correction rapide.
+
+## Corrigé
+- Les cadres apparaissent maintenant dans Collection.
+- Les titres apparaissent maintenant dans Collection.
+- Les objets verrouillés sont visibles avec un bouton Boutique.
+- Ajout d'une progression de collection.
+
+# MORDRA 1.1.6 — SAVE FIX
+
+Correction importante.
+
+## Corrigé
+- Le bouton Valider et enregistrer refonctionne.
+- Sauvegarde de partie sécurisée.
+- XP, Éclats de Sang, statistiques et historique enregistrés correctement.
+- Ajout d'un message d'erreur clair si un problème arrive.
+
+# MORDRA 1.1.5 — PREMIUM LOADING SCREEN
+
+Mise à jour de l'introduction.
+
+## Nouveautés
+- Logo MORDRA en haut de la jauge.
+- Chargement plus long et plus premium.
+- Textes de chargement dynamiques.
+- Crédits Kevin Moreau plus discrets en bas.
+- Mention ChatGPT plus discrète.
+- Effet de barre lumineuse rouge/or.
+- Transition vers l'écran Démarrer.
+
+# MORDRA 1.1.4 — INTRO CLEAN
+
+Petite mise à jour de l'introduction.
+
+## Nouveautés
+- Suppression de l'écran ⚠️.
+- Intro plus douce et plus professionnelle.
+- Crédit Kevin Moreau conservé.
+- Mention ChatGPT conservée.
+- Ajout d'une jauge de chargement rapide.
+- Textes de chargement dynamiques.
+- Transition vers l'écran Démarrer.
+
+# MORDRA 1.1.3 — MVP UPDATE
+
+Petite mise à jour MVP.
+
+## Nouveautés
+- Calcul automatique du MVP.
+- Le MVP est le joueur avec le plus d'XP générale.
+- Couronne MVP dorée.
+- Carte joueur illuminée en or.
+- Ligne spéciale dans le classement.
+- Grande carte MVP en haut du classement.
+- Ajout du Hall of Fame.
+- Si un joueur dépasse le MVP, il devient automatiquement le nouveau MVP.
+
+# MORDRA 1.1.2 — SHADOW PASS
+
+Mise à jour du Passe des Ombres.
+
+## Nouveautés
+- Passe de combat avec 100 paliers.
+- Affichage : Se termine dans 30 jours.
+- Saison 1 : Les Origines.
+- Progression du passe avec XP.
+- Récompenses récupérables.
+- Paliers bloqués / débloqués / récupérés.
+- Récompenses en Éclats de Sang.
+- Bonus cosmétique tous les 10 paliers.
+
+# MORDRA 1.1.1 — INTRO FLOW FIX
+
+Correction rapide.
+
+## Corrigé
+- L'écran Démarrer ne revient plus tout seul après être arrivé dans le menu principal.
+- Les timers de l'intro sont maintenant annulés quand on clique sur Passer ou Démarrer.
+- Le flux est maintenant : Intro → Démarrer → Menu principal.
+
+# MORDRA 1.1.0 — BLOOD MARKET REWORK
+
+Reconstruction propre du module Armurerie.
+
+## Corrigé
+- L'Armurerie est visible dans le menu principal.
+- La boutique est accessible depuis l'Armurerie.
+- La boutique tournante change toutes les heures.
+- L'offre de l'heure est visible.
+- Les coffres fonctionnent.
+- Le Passe des Ombres prototype fonctionne.
+- La Collection Blood Market permet d'équiper bannières, badges, cadres et titres.
+- Les cartes joueurs affichent les objets équipés.
+
+# MORDRA 1.0.5 — BACK FIX
+
+Correction rapide.
+
+## Corrigé
+- Le bouton retour en haut dans Classement revient maintenant au menu principal.
+- Sécurisation des retours des autres grands onglets.
+
+# MORDRA 1.0.4 — WALLET FIX
+
+Correction importante.
+
+## Corrigé
+- Les Éclats de Sang sont maintenant synchronisés partout.
+- L'Armurerie lit le même portefeuille que les statistiques.
+- Migration automatique des anciennes sauvegardes.
+- Ajout d'un bouton Paramètres > Réparer les Éclats de Sang.
+
+# MORDRA 1.0.3 — MENU & PROFILES
+
+Petite mise à jour d'organisation.
+
+## Nouveautés
+- L'onglet Crédits est déplacé dans Paramètres.
+- L'Historique est déplacé dans Classement.
+- Le menu principal est plus propre.
+- Ajout d'un bouton Nouveau joueur dans Statistiques.
+- On peut créer un profil joueur sans lancer une partie.
+- Ajout de Notes de mise à jour dans Paramètres.
+
 # MORDRA 1.0.2 — BLOOD MARKET
 
 Chapitre 1 lancé.

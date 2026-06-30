@@ -602,3 +602,373 @@ body{
   font-size:28px;
   height:30px;
 }
+
+
+/* MORDRA 1.1.0 — Blood Market Rework */
+.bm-card{
+  background:
+    radial-gradient(circle at 50% 0%, rgba(208,31,60,.20), transparent 38%),
+    var(--panel);
+}
+.bm-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin:4px 0 18px;
+  padding:14px;
+  border-radius:20px;
+  background:linear-gradient(135deg,rgba(208,31,60,.18),rgba(0,0,0,.28));
+  border:1px solid rgba(208,31,60,.25);
+}
+.bm-header b{display:block;font-size:22px}
+.bm-money{
+  color:var(--gold);
+  font-weight:950;
+  font-size:19px;
+  white-space:nowrap;
+}
+.bm-item,.bm-deal{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px;
+  margin:9px 0;
+  border-radius:18px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
+}
+.bm-deal{
+  background:linear-gradient(135deg,rgba(247,199,93,.16),rgba(208,31,60,.16));
+  border:1px solid rgba(247,199,93,.28);
+  box-shadow:0 0 34px rgba(247,199,93,.08);
+}
+.bm-icon{
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  background:rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.12);
+}
+.bm-info{flex:1}
+.bm-rarity-commun{box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.bm-rarity-rare{box-shadow:inset 0 0 0 1px rgba(105,213,140,.25)}
+.bm-rarity-epique{box-shadow:inset 0 0 0 1px rgba(125,156,255,.28)}
+.bm-rarity-legendaire{box-shadow:inset 0 0 0 1px rgba(247,199,93,.32)}
+.bm-rarity-mythique{box-shadow:inset 0 0 0 1px rgba(255,49,87,.45)}
+.bm-purchase{text-align:center}
+.bm-big-icon{
+  width:120px;
+  height:120px;
+  margin:18px auto;
+  border-radius:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:66px;
+  background:radial-gradient(circle,rgba(247,199,93,.25),rgba(208,31,60,.12));
+  border:1px solid rgba(247,199,93,.28);
+  animation:levelGlow 1s infinite alternate;
+}
+.bm-chest-anim{
+  width:140px;
+  height:140px;
+  margin:18px auto;
+  border-radius:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:72px;
+  background:radial-gradient(circle,rgba(247,199,93,.25),rgba(208,31,60,.12));
+  border:1px solid rgba(247,199,93,.28);
+  animation:levelGlow 1s infinite alternate;
+}
+.bm-deal s{color:rgba(255,255,255,.45)}
+.pass-player-card.has-frame{
+  border:2px solid rgba(247,199,93,.6);
+}
+.pass-player-title{
+  position:relative;
+  z-index:1;
+  margin-top:5px;
+  color:var(--gold);
+  font-weight:900;
+}
+.pass-player-frame{
+  position:absolute;
+  inset:8px;
+  border-radius:22px;
+  font-size:22px;
+  display:flex;
+  justify-content:flex-end;
+  padding:8px;
+  opacity:.95;
+  z-index:2;
+}
+
+
+/* Shadow Pass v1.1.2 */
+.pass-hero{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  margin:12px 0 16px;
+  padding:18px;
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(247,199,93,.20), transparent 35%),
+    linear-gradient(135deg, rgba(208,31,60,.22), rgba(0,0,0,.25));
+  border:1px solid rgba(247,199,93,.22);
+  box-shadow:0 0 42px rgba(208,31,60,.10);
+}
+.pass-hero h2{
+  margin:2px 0 4px;
+}
+.pass-level{
+  min-width:94px;
+  min-height:94px;
+  border-radius:24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(247,199,93,.25);
+  color:var(--gold);
+  font-weight:900;
+  text-align:center;
+}
+.pass-level b{
+  font-size:24px;
+}
+.pass-list{
+  max-height:520px;
+  overflow:auto;
+  padding-right:4px;
+}
+.pass-tier{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px;
+  margin:9px 0;
+  border-radius:18px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
+}
+.pass-tier-left{
+  flex:1;
+}
+.pass-unlocked{
+  border-color:rgba(247,199,93,.35);
+  background:rgba(247,199,93,.08);
+}
+.pass-claimed{
+  opacity:.7;
+  border-color:rgba(105,213,140,.25);
+}
+.pass-locked{
+  opacity:.55;
+}
+
+
+/* MVP Update */
+.mvp-badge{
+  position:relative;
+  z-index:4;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 12px;
+  margin:0 auto 8px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#f7c75d,#ffe8a3,#b26b00);
+  color:#2a1700;
+  font-weight:950;
+  box-shadow:0 0 24px rgba(247,199,93,.55);
+  animation:mvpGlow 1.5s infinite alternate;
+}
+.mvp-badge.big{
+  font-size:18px;
+  padding:10px 16px;
+}
+.mvp-card{
+  border:2px solid rgba(247,199,93,.75)!important;
+  box-shadow:
+    0 0 35px rgba(247,199,93,.28),
+    inset 0 0 34px rgba(247,199,93,.14)!important;
+}
+.mvp-row{
+  background:linear-gradient(135deg,rgba(247,199,93,.16),rgba(208,31,60,.08));
+  border-color:rgba(247,199,93,.3);
+}
+.leader-mvp-card,.hof-mvp-card{
+  text-align:center;
+  margin:14px 0 18px;
+  padding:22px 14px;
+  border-radius:26px;
+  background:linear-gradient(135deg,#3b2a00,#f7c75d,#7a4200);
+  border:2px solid rgba(247,199,93,.75);
+  box-shadow:0 0 45px rgba(247,199,93,.25);
+  color:#1b1000;
+}
+.leader-mvp-card h1,.hof-mvp-card h1{
+  color:#1b1000;
+  text-shadow:none;
+}
+.leader-mvp-card .small,.hof-mvp-card .small{
+  color:#3a2600;
+}
+.mvp-announcement{
+  background:linear-gradient(135deg,rgba(247,199,93,.20),rgba(255,255,255,.08));
+}
+@keyframes mvpGlow{
+  from{filter:brightness(1); transform:scale(1)}
+  to{filter:brightness(1.18); transform:scale(1.03)}
+}
+
+
+/* Intro Clean v1.1.4 */
+.clean-intro .intro-credit{
+  gap:16px;
+}
+.clean-credit{
+  max-width:420px;
+  margin:0 auto;
+  padding:26px 18px;
+}
+.loading-box{
+  margin:34px auto 0;
+  width:100%;
+  max-width:340px;
+}
+.loading-text{
+  color:var(--muted);
+  font-weight:800;
+  font-size:14px;
+  margin-bottom:10px;
+  min-height:20px;
+}
+.loading-bar{
+  height:12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+  box-shadow:inset 0 0 18px rgba(0,0,0,.35);
+}
+.loading-bar div{
+  width:0%;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--red),var(--gold));
+  box-shadow:0 0 22px rgba(247,199,93,.35);
+  transition:width .12s linear;
+}
+.loading-percent{
+  margin-top:8px;
+  color:var(--gold);
+  font-weight:950;
+}
+
+
+/* MORDRA 1.1.5 — Premium Loading Screen */
+.premium-loading{
+  min-height:calc(100dvh - 36px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.premium-load-center{
+  position:relative;
+  z-index:2;
+  width:100%;
+  max-width:390px;
+  padding:22px 12px 120px;
+  animation:introAppear 1.2s ease both;
+}
+.premium-load-logo{
+  font-size:58px;
+  letter-spacing:10px;
+  font-weight:950;
+  color:#ff3157;
+  text-shadow:
+    0 0 22px rgba(255,49,87,.95),
+    0 0 80px rgba(208,31,60,.45);
+  animation:startLogoGlow 2.2s infinite alternate;
+}
+.premium-load-sub{
+  margin-top:10px;
+  color:var(--muted);
+  letter-spacing:3px;
+  text-transform:uppercase;
+  font-size:12px;
+  font-weight:900;
+}
+.premium-loading-box{
+  margin-top:34px;
+  max-width:350px;
+}
+.premium-bar{
+  height:14px;
+}
+.premium-bar div{
+  background:linear-gradient(90deg,#d01f3c,#f7c75d,#fff2b8);
+  box-shadow:0 0 28px rgba(247,199,93,.55);
+}
+.premium-credit-bottom{
+  position:absolute;
+  left:18px;
+  right:18px;
+  bottom:calc(28px + env(safe-area-inset-bottom));
+  z-index:3;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  align-items:center;
+  color:rgba(255,255,255,.42);
+  font-size:11px;
+  letter-spacing:.2px;
+}
+.premium-credit-bottom b{
+  color:rgba(255,255,255,.68);
+  font-size:13px;
+  letter-spacing:1px;
+}
+.premium-credit-bottom small{
+  color:rgba(255,255,255,.34);
+  font-size:10px;
+}
+@media (max-width:380px){
+  .premium-load-logo{
+    font-size:48px;
+    letter-spacing:7px;
+  }
+}
+
+
+/* Collection Fix v1.1.7 */
+.bm-collection-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px;
+  margin:9px 0;
+  border-radius:18px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
+}
+.bm-collection-item.locked{
+  opacity:.72;
+}
+.bm-collection-item.equipped{
+  border-color:rgba(247,199,93,.38);
+  background:rgba(247,199,93,.08);
+}

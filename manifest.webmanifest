@@ -1,7 +1,7 @@
 {
-  "name": "MORDRA 1.0.2 Blood Market",
+  "name": "MORDRA 1.1.8 Collection",
   "short_name": "MORDRA",
-  "description": "MORDRA Blood Market : Armurerie, boutique, coffres et Éclats de Sang.",
+  "description": "Correction complète Collection : cadres et titres visibles depuis le menu principal.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mordra-v1-0-2-blood-market';
+const CACHE_NAME = 'mordra-v1-1-8-full-collection-fix';
 const FILES = [
   './',
   './index.html',
