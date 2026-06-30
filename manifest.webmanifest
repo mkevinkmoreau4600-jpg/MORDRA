@@ -1,5 +1,5 @@
 {
-  "name": "MORDRA 2.0.1 Shop Hub",
+  "name": "MORDRA 3.1.1 Mode Cleanup",
   "short_name": "MORDRA",
   "start_url": "./index.html",
   "scope": "./",
@@ -24,5 +24,5 @@
       "type": "image/png"
     }
   ],
-  "description": "Menu Boutique ajouté : Blood Market, boutique tournante, passe et collection rangés ensemble."
+  "description": "Nettoyage du menu : le choix du mode contrôle automatiquement le dévoilement."
 }

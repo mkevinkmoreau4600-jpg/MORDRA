@@ -34,3 +34,361 @@ h2{margin:18px 0 10px;font-size:21px}.small{color:var(--muted);font-size:13px}.x
 @media(max-width:380px){.logo,.loading-logo{font-size:46px;letter-spacing:7px}h1{font-size:26px}}
 
 .result-line{margin:12px 0;padding:13px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08)}
+
+
+/* MORDRA 2.0.2 — Party Clarity */
+.selected-list{margin:8px 0 10px}
+.selected-player{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px;
+  margin:8px 0;
+  border-radius:18px;
+  background:linear-gradient(135deg,rgba(105,213,140,.12),rgba(255,255,255,.06));
+  border:1px solid rgba(105,213,140,.24);
+}
+.selected-pick{
+  background:linear-gradient(135deg,rgba(105,213,140,.30),rgba(105,213,140,.12))!important;
+  border-color:rgba(105,213,140,.45)!important;
+}
+
+
+/* MORDRA 2.0.3 — Mobile Center */
+.mobile-center-card{
+  min-height:calc(100dvh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.mobile-center-card .player-card{
+  margin-top:0;
+}
+.mobile-center-card h1,
+.mobile-center-card .logo,
+.mobile-center-card p{
+  text-align:center;
+}
+
+
+/* MORDRA 2.0.4 — Vote Transition */
+.vote-turn-card,
+.vote-confirm-card{
+  text-align:center;
+}
+.vote-pulse,
+.vote-check{
+  width:92px;
+  height:92px;
+  border-radius:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 18px;
+  font-size:46px;
+  background:radial-gradient(circle,rgba(247,199,93,.28),rgba(208,31,60,.12));
+  border:1px solid rgba(247,199,93,.25);
+  box-shadow:0 0 40px rgba(247,199,93,.16);
+  animation:votePulse 1.15s infinite alternate;
+}
+.vote-check{
+  background:radial-gradient(circle,rgba(105,213,140,.28),rgba(208,31,60,.08));
+  border-color:rgba(105,213,140,.28);
+}
+@keyframes votePulse{
+  from{transform:scale(1); filter:brightness(1)}
+  to{transform:scale(1.06); filter:brightness(1.25)}
+}
+
+
+/* MORDRA 2.0.6 — Emergency Display Fix */
+.shop-wallet{
+  position:sticky;
+  top:calc(8px + env(safe-area-inset-top));
+  z-index:19;
+  float:right;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:fit-content;
+  margin:0 0 10px 10px;
+  padding:10px 12px;
+  border-radius:999px;
+  background:rgba(5,5,9,.78);
+  border:1px solid rgba(247,199,93,.24);
+  backdrop-filter:blur(12px);
+  box-shadow:0 10px 30px rgba(0,0,0,.28);
+}
+.shop-wallet span{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+.shop-wallet b{
+  color:var(--gold);
+  font-size:15px;
+  white-space:nowrap;
+}
+.shop-screen h1{
+  clear:both;
+}
+
+
+/* MORDRA 3.0.3 — Visual Safe Update */
+.visual-profile{
+  min-height:210px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border-width:3px!important;
+  position:relative;
+  overflow:hidden;
+}
+.visual-profile > *{
+  position:relative;
+  z-index:2;
+}
+.visual-overlay{
+  position:absolute!important;
+  inset:0;
+  z-index:1!important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,.22), transparent 34%),
+    linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.45));
+}
+.visual-title{
+  margin:5px 0 7px;
+  padding:6px 12px;
+  border-radius:999px;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.14);
+  color:var(--gold);
+  font-weight:950;
+}
+.visual-frame-name{
+  position:absolute!important;
+  top:10px;
+  right:10px;
+  z-index:5!important;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,.42);
+  border:1px solid rgba(255,255,255,.16);
+  font-size:12px;
+  font-weight:950;
+}
+.visual-banner-name{
+  margin-top:10px;
+  font-size:12px;
+  font-weight:900;
+  color:rgba(255,255,255,.74);
+}
+.visual-frame-bronze{
+  border-color:#b06a38!important;
+  box-shadow:0 0 30px rgba(176,106,56,.38), inset 0 0 22px rgba(176,106,56,.18)!important;
+}
+.visual-frame-silver{
+  border-color:#d9e2ee!important;
+  box-shadow:0 0 36px rgba(217,226,238,.48), inset 0 0 24px rgba(217,226,238,.22)!important;
+}
+.visual-frame-gold{
+  border-color:#f7c75d!important;
+  box-shadow:0 0 40px rgba(247,199,93,.52), inset 0 0 28px rgba(247,199,93,.23)!important;
+}
+.visual-frame-diamond{
+  border-color:#8ee9ff!important;
+  box-shadow:0 0 42px rgba(142,233,255,.58), inset 0 0 28px rgba(142,233,255,.25)!important;
+}
+.visual-frame-void{
+  border-color:#b85cff!important;
+  box-shadow:0 0 46px rgba(184,92,255,.58), inset 0 0 32px rgba(184,92,255,.25)!important;
+}
+
+
+/* MORDRA 3.0.5 — Succès stable */
+.achievement-card{
+  margin:10px 0;
+  padding:14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
+}
+.achievement-card.locked{
+  opacity:.72;
+}
+.achievement-card.unlocked{
+  background:linear-gradient(135deg,rgba(105,213,140,.13),rgba(255,255,255,.06));
+  border-color:rgba(105,213,140,.25);
+}
+.achievement-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.achievement-head span{
+  font-size:12px;
+  font-weight:950;
+  color:var(--gold);
+}
+.ach-rarity-commun{box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.ach-rarity-rare{box-shadow:inset 0 0 0 1px rgba(105,213,140,.22)}
+.ach-rarity-epique{box-shadow:inset 0 0 0 1px rgba(125,156,255,.25)}
+.ach-rarity-legendaire{box-shadow:inset 0 0 0 1px rgba(247,199,93,.30)}
+.ach-rarity-mythique{box-shadow:inset 0 0 0 1px rgba(255,49,87,.38)}
+.ach-rarity-secret{
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.30),0 0 24px rgba(247,199,93,.08);
+}
+
+
+/* MORDRA 3.0.10 — Discussion Timer */
+.discussion-timer-box{
+  margin:10px 0 16px;
+  padding:18px 14px;
+  border-radius:24px;
+  background:linear-gradient(135deg,rgba(247,199,93,.14),rgba(255,255,255,.06));
+  border:1px solid rgba(247,199,93,.24);
+  text-align:center;
+  box-shadow:0 16px 50px rgba(0,0,0,.22);
+}
+.discussion-timer-box b{
+  display:block;
+  margin:6px 0;
+  font-size:46px;
+  letter-spacing:2px;
+  color:var(--gold);
+  text-shadow:0 0 22px rgba(247,199,93,.25);
+}
+.discussion-timer-box small{
+  color:var(--muted);
+  font-weight:800;
+}
+.discussion-timer-box.timer-danger{
+  background:linear-gradient(135deg,rgba(208,31,60,.22),rgba(247,199,93,.10));
+  border-color:rgba(208,31,60,.42);
+  animation:timerPulse .55s infinite alternate;
+}
+.discussion-timer-box.timer-danger b{
+  color:#ff3157;
+}
+@keyframes timerPulse{
+  from{transform:scale(1); filter:brightness(1)}
+  to{transform:scale(1.025); filter:brightness(1.2)}
+}
+
+
+/* MORDRA 3.0.12 — Verdict Cinematic */
+.verdict-card{
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(208,31,60,.18), transparent 42%),
+    var(--panel);
+}
+.verdict-ring{
+  width:118px;
+  height:118px;
+  border-radius:50%;
+  margin:0 auto 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(circle,rgba(247,199,93,.16),rgba(208,31,60,.08));
+  border:4px solid rgba(247,199,93,.75);
+  box-shadow:
+    0 0 44px rgba(247,199,93,.28),
+    inset 0 0 28px rgba(247,199,93,.12);
+  animation:verdictPulse .8s infinite alternate;
+}
+.verdict-ring span{
+  font-size:54px;
+  font-weight:950;
+  color:var(--gold);
+  text-shadow:0 0 24px rgba(247,199,93,.55);
+}
+.verdict-boom{
+  border-color:rgba(255,49,87,.85);
+  box-shadow:
+    0 0 52px rgba(255,49,87,.38),
+    inset 0 0 30px rgba(255,49,87,.18);
+}
+.verdict-final{
+  animation:verdictFlash .55s ease;
+}
+@keyframes verdictPulse{
+  from{transform:scale(1); filter:brightness(1)}
+  to{transform:scale(1.08); filter:brightness(1.25)}
+}
+@keyframes verdictFlash{
+  0%{filter:brightness(1)}
+  35%{filter:brightness(1.8)}
+  100%{filter:brightness(1)}
+}
+
+
+/* MORDRA 3.1 — Shadow Modes */
+.mode-card{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:14px;
+  margin:10px 0;
+  border-radius:20px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 12px 34px rgba(0,0,0,.18);
+}
+.mode-card:active{
+  transform:scale(.985);
+}
+.mode-icon{
+  width:54px;
+  height:54px;
+  border-radius:17px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:29px;
+  background:radial-gradient(circle,rgba(247,199,93,.20),rgba(208,31,60,.08));
+  border:1px solid rgba(247,199,93,.18);
+}
+.mode-info{
+  flex:1;
+}
+.mode-info b{
+  font-size:17px;
+}
+.mode-soon{
+  opacity:.62;
+}
+.soon-badge{
+  display:inline-block;
+  margin-left:6px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:rgba(247,199,93,.13);
+  border:1px solid rgba(247,199,93,.20);
+  color:var(--gold);
+  font-size:10px;
+  vertical-align:middle;
+}
+.selected-mode-box{
+  margin:10px 0 14px;
+  padding:14px;
+  border-radius:20px;
+  background:linear-gradient(135deg,rgba(247,199,93,.14),rgba(255,255,255,.06));
+  border:1px solid rgba(247,199,93,.22);
+}
+.mode-mini-badge{
+  display:inline-flex;
+  align-self:center;
+  justify-content:center;
+  margin:0 auto 12px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:rgba(247,199,93,.12);
+  border:1px solid rgba(247,199,93,.20);
+  color:var(--gold);
+  font-weight:950;
+}
