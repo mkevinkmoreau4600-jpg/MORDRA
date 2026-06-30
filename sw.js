@@ -1,9 +1,10 @@
-const CACHE_NAME = 'mordra-v0-3-4-pwa';
+const CACHE_NAME = 'mordra-v1-0-0-alpha';
 const FILES = [
   './',
   './index.html',
   './style.css',
   './game.js',
+  './data/wordpairs.js',
   './manifest.webmanifest',
   './icons/icon-180.png',
   './icons/icon-192.png',

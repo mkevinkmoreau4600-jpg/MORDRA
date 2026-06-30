@@ -1,7 +1,7 @@
 {
-  "name": "MORDRA",
+  "name": "MORDRA 1.0 Alpha",
   "short_name": "MORDRA",
-  "description": "Jeu de soirée avec Tueurs, Survivants, mots proches, votes secrets et statistiques.",
+  "description": "Jeu de soirée horrifique avec Tueurs, Survivants, succès, bannières et plus de 4000 paires de mots.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

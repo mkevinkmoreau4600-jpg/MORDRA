@@ -1,3 +1,26 @@
+# MORDRA 1.0.0 ALPHA PUBLIC
+
+Première grosse base de la future sortie publique.
+
+## Nouveautés 1.0 Alpha
+- Plus de 4 000 paires de mots intégrées.
+- Menu Succès.
+- Succès par joueur.
+- Récompenses : bannières, badges, Éclats de Sang.
+- Menu Collection.
+- Équipement de bannières.
+- Équipement de 3 badges maximum.
+- Profil joueur avec bannière et badges.
+- Succès débloqués affichés en fin de partie.
+- Version PWA iPhone prête pour GitHub Pages.
+
+## Publication GitHub
+Envoyer tous les fichiers à la racine du dépôt MORDRA.
+
+## Important
+Cette version reste une alpha : elle pose les grosses bases de la 1.0.0.
+
+
 # MORDRA v0.3.0 — The Hunt Update
 
 Première grosse mise à jour du prototype.

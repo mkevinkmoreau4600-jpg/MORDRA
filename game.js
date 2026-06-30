@@ -1,26 +1,7 @@
 
 const app = document.getElementById("app");
 
-const pairs = [
-  {s:"Pizza", k:"Burger", level:"Très proche"},
-  {s:"Lion", k:"Tigre", level:"Très proche"},
-  {s:"Chien", k:"Loup", level:"Très proche"},
-  {s:"Coca", k:"Pepsi", level:"Très proche"},
-  {s:"Xbox", k:"PlayStation", level:"Très proche"},
-  {s:"Ferrari", k:"Lamborghini", level:"Très proche"},
-  {s:"Forêt", k:"Jungle", level:"Proche"},
-  {s:"Avion", k:"Hélicoptère", level:"Proche"},
-  {s:"Téléphone", k:"Tablette", level:"Proche"},
-  {s:"Hôpital", k:"Clinique", level:"Proche"},
-  {s:"Prison", k:"Commissariat", level:"Proche"},
-  {s:"Tennis", k:"Padel", level:"Proche"},
-  {s:"Football", k:"Arbitre", level:"Piégeux"},
-  {s:"Océan", k:"Plage", level:"Piégeux"},
-  {s:"Pizza", k:"Four", level:"Piégeux"},
-  {s:"Avion", k:"Aéroport", level:"Piégeux"},
-  {s:"Lion", k:"Savane", level:"Piégeux"},
-  {s:"Hôpital", k:"Ambulance", level:"Piégeux"}
-];
+const pairs = window.MORDRA_WORD_PAIRS || [];
 
 let state = {
   playersCount: 4,
@@ -34,6 +15,123 @@ let state = {
 
 const saveKey = "mordra_v03_stats";
 const historyKey = "mordra_v03_history";
+
+const cosmetics = {
+  banners: [
+    {id:"default", name:"Ombre", css:"linear-gradient(135deg,rgba(255,255,255,.08),rgba(208,31,60,.12))"},
+    {id:"blood", name:"Sang", css:"linear-gradient(135deg,#3b000b,#d01f3c)"},
+    {id:"gold", name:"Or", css:"linear-gradient(135deg,#3b2a00,#f7c75d)"},
+    {id:"ice", name:"Glace", css:"linear-gradient(135deg,#09233d,#7d9cff)"},
+    {id:"forest", name:"Forêt", css:"linear-gradient(135deg,#061f14,#2aaa68)"},
+    {id:"galaxy", name:"Galaxy", css:"linear-gradient(135deg,#120024,#2d0b6e,#d01f3c)"},
+    {id:"obsidian", name:"Obsidienne", css:"linear-gradient(135deg,#050505,#2b2b38)"},
+    {id:"halloween", name:"Halloween", css:"linear-gradient(135deg,#1d0c00,#ff7a18)"},
+    {id:"storm", name:"Tempête", css:"linear-gradient(135deg,#101827,#8aa0bd)"},
+    {id:"royal", name:"Royal", css:"linear-gradient(135deg,#19002e,#ad7dff)"}
+  ],
+  badges: [
+    {id:"knife", name:"Lame", icon:"🔪"},
+    {id:"shield", name:"Bouclier", icon:"🛡️"},
+    {id:"eye", name:"Œil", icon:"👁️"},
+    {id:"skull", name:"Crâne", icon:"💀"},
+    {id:"crown", name:"Couronne", icon:"👑"},
+    {id:"target", name:"Cible", icon:"🎯"},
+    {id:"fire", name:"Feu", icon:"🔥"},
+    {id:"ghost", name:"Fantôme", icon:"👻"},
+    {id:"wolf", name:"Loup", icon:"🐺"},
+    {id:"trophy", name:"Trophée", icon:"🏆"}
+  ]
+};
+
+const achievements = [
+  {id:"first_game", name:"Première nuit", desc:"Jouer ta première partie.", cat:"Général", reward:{banner:"default", badge:"eye", shards:25}, test:p=>p.games>=1},
+  {id:"games_10", name:"Habitué du noir", desc:"Jouer 10 parties.", cat:"Général", reward:{badge:"fire", shards:50}, test:p=>p.games>=10},
+  {id:"games_50", name:"Marathon de l'ombre", desc:"Jouer 50 parties.", cat:"Général", reward:{banner:"storm", shards:120}, test:p=>p.games>=50},
+  {id:"games_100", name:"Cent nuits", desc:"Jouer 100 parties.", cat:"Général", reward:{badge:"trophy", shards:250}, test:p=>p.games>=100},
+  {id:"wins_10", name:"Instinct de survie", desc:"Gagner 10 parties.", cat:"Général", reward:{badge:"crown", shards:80}, test:p=>p.wins>=10},
+  {id:"wins_50", name:"Dominateur", desc:"Gagner 50 parties.", cat:"Général", reward:{banner:"gold", shards:200}, test:p=>p.wins>=50},
+  {id:"streak_3", name:"Série sanglante", desc:"Gagner 3 parties d'affilée.", cat:"Général", reward:{badge:"fire", shards:60}, test:p=>p.bestStreak>=3},
+  {id:"streak_7", name:"Invincible", desc:"Gagner 7 parties d'affilée.", cat:"Général", reward:{banner:"royal", shards:180}, test:p=>p.bestStreak>=7},
+  {id:"lvl_10", name:"Niveau 10", desc:"Atteindre le niveau général 10.", cat:"Progression", reward:{banner:"ice", shards:100}, test:p=>levelFromXP(p.totalXP)>=10},
+  {id:"lvl_25", name:"Ascension", desc:"Atteindre le niveau général 25.", cat:"Progression", reward:{banner:"galaxy", shards:300}, test:p=>levelFromXP(p.totalXP)>=25},
+
+  {id:"surv_first", name:"Premier survivant", desc:"Gagner une partie en Survivant.", cat:"Survivant", reward:{badge:"shield", shards:40}, test:p=>p.survivor.wins>=1},
+  {id:"surv_10", name:"Protecteur", desc:"Gagner 10 parties en Survivant.", cat:"Survivant", reward:{banner:"forest", shards:100}, test:p=>p.survivor.wins>=10},
+  {id:"surv_50", name:"Mur vivant", desc:"Gagner 50 parties en Survivant.", cat:"Survivant", reward:{badge:"trophy", shards:250}, test:p=>p.survivor.wins>=50},
+  {id:"find_1", name:"Premier Tueur trouvé", desc:"Trouver ton premier Tueur.", cat:"Votes", reward:{badge:"target", shards:40}, test:p=>p.survivor.killersFound>=1},
+  {id:"find_25", name:"Œil de lynx", desc:"Trouver 25 Tueurs.", cat:"Votes", reward:{badge:"eye", shards:160}, test:p=>p.survivor.killersFound>=25},
+  {id:"good_votes_50", name:"Détective", desc:"Faire 50 bons votes.", cat:"Votes", reward:{banner:"ice", shards:180}, test:p=>p.survivor.goodVotes>=50},
+  {id:"surv_streak_5", name:"Gardien", desc:"Gagner 5 parties Survivant d'affilée.", cat:"Survivant", reward:{banner:"forest", shards:160}, test:p=>p.survivor.bestStreak>=5},
+
+  {id:"killer_first", name:"Première chasse", desc:"Gagner une partie en Tueur.", cat:"Tueur", reward:{badge:"knife", shards:60}, test:p=>p.killer.wins>=1},
+  {id:"killer_10", name:"Prédateur", desc:"Gagner 10 parties en Tueur.", cat:"Tueur", reward:{banner:"blood", shards:140}, test:p=>p.killer.wins>=10},
+  {id:"killer_50", name:"Faucheur", desc:"Gagner 50 parties en Tueur.", cat:"Tueur", reward:{badge:"skull", shards:300}, test:p=>p.killer.wins>=50},
+  {id:"no_vote_5", name:"Fantôme", desc:"Faire 5 parties Tueur avec zéro vote reçu.", cat:"Tueur", reward:{badge:"ghost", shards:120}, test:p=>p.killer.zeroVoteWins>=5},
+  {id:"manip_10", name:"Manipulateur", desc:"Réussir 10 manipulations en Tueur.", cat:"Tueur", reward:{badge:"wolf", shards:180}, test:p=>p.killer.manips>=10},
+  {id:"killer_streak_5", name:"Ombre parfaite", desc:"Gagner 5 parties Tueur d'affilée.", cat:"Tueur", reward:{banner:"obsidian", shards:220}, test:p=>p.killer.bestStreak>=5}
+];
+
+// Ajoute automatiquement des succès de progression pour donner une grosse collection dès la 1.0 alpha.
+for(let n=5;n<=100;n+=5){
+  achievements.push({
+    id:`auto_general_level_${n}`,
+    name:`Niveau général ${n}`,
+    desc:`Atteindre le niveau général ${n}.`,
+    cat:"Progression",
+    reward:{shards:n*5, badge:n%25===0?"crown":null, banner:n%50===0?"galaxy":null},
+    test:p=>levelFromXP(p.totalXP)>=n
+  });
+}
+for(let n=5;n<=100;n+=5){
+  achievements.push({
+    id:`auto_survivor_wins_${n}`,
+    name:`${n} victoires Survivant`,
+    desc:`Gagner ${n} parties en Survivant.`,
+    cat:"Survivant",
+    reward:{shards:n*4, badge:n%25===0?"shield":null},
+    test:p=>p.survivor.wins>=n
+  });
+  achievements.push({
+    id:`auto_killer_wins_${n}`,
+    name:`${n} victoires Tueur`,
+    desc:`Gagner ${n} parties en Tueur.`,
+    cat:"Tueur",
+    reward:{shards:n*5, badge:n%25===0?"knife":null},
+    test:p=>p.killer.wins>=n
+  });
+}
+
+function getUnlockedAchievements(p){
+  p = normalizePlayerStats(p);
+  return achievements.filter(a=>{
+    try{return a.test(p)}catch(e){return false}
+  });
+}
+function getUnlockedRewards(p){
+  const unlocked = getUnlockedAchievements(p);
+  const banners = new Set(["default"]);
+  const badges = new Set([]);
+  let shards = 0;
+  unlocked.forEach(a=>{
+    if(a.reward?.banner) banners.add(a.reward.banner);
+    if(a.reward?.badge) badges.add(a.reward.badge);
+    if(a.reward?.shards) shards += a.reward.shards;
+  });
+  return {unlocked, banners:[...banners], badges:[...badges], shards};
+}
+function getBanner(id){
+  return cosmetics.banners.find(b=>b.id===id) || cosmetics.banners[0];
+}
+function getBadge(id){
+  return cosmetics.badges.find(b=>b.id===id);
+}
+function ensureCosmetics(p){
+  p.cosmetics ??= {};
+  p.cosmetics.banner ??= "default";
+  p.cosmetics.badges ??= [];
+  return p;
+}
+
 
 function loadStats(){ return JSON.parse(localStorage.getItem(saveKey) || "{}"); }
 function saveStats(s){ localStorage.setItem(saveKey, JSON.stringify(s)); }
@@ -57,6 +155,7 @@ function normalizePlayerStats(p){
   p.totalXP ??= 0; p.games ??= 0; p.wins ??= 0; p.losses ??= 0; p.streak ??= 0; p.bestStreak ??= 0;
   ["xp","games","wins","losses","goodVotes","badVotes","killersFound","currentStreak","bestStreak"].forEach(k=>p.survivor[k] ??= 0);
   ["xp","games","wins","losses","manips","zeroVoteWins","votesReceived","currentStreak","bestStreak"].forEach(k=>p.killer[k] ??= 0);
+  ensureCosmetics(p);
   return p;
 }
 
@@ -198,6 +297,8 @@ function home(){
       <button class="btn" onclick="newGame()">▶️ Nouvelle partie</button>
       <button class="btn secondary" onclick="leaderboard()">🏆 Classement</button>
       <button class="btn secondary" onclick="statsList()">📊 Statistiques</button>
+      <button class="btn secondary" onclick="achievementsList()">🏅 Succès</button>
+      <button class="btn secondary" onclick="collectionList()">🎁 Collection</button>
       <button class="btn secondary" onclick="historyList()">📜 Historique</button>
       <button class="btn secondary" onclick="credits()">🎬 Crédits</button>
       <button class="btn ghost" onclick="settings()">⚙️ Paramètres</button>
@@ -416,9 +517,11 @@ function saveGame(){
   const stats=loadStats(), history=loadHistory();
   if(history.find(h=>h.id===state.game.id)) return alert("Cette partie est déjà enregistrée.");
   const levelUps=[];
+  const achievementUps=[];
   state.game.players.forEach((gp,i)=>{
     const p=ensurePlayer(stats,gp.name);
     const before=clonePlayerStats(p);
+    const beforeAch=getUnlockedAchievements(before).map(a=>a.id);
     const res=calcXP(i,state.game.winner);
     const killer=gp.role==="killer";
     const won=killer?state.game.winner==="killers":state.game.winner==="survivors";
@@ -437,12 +540,15 @@ function saveGame(){
     }
     const ups=detectLevelUpsForPlayer(before,p);
     if(ups.length) levelUps.push({name:gp.name,ups});
+    const afterAch=getUnlockedAchievements(p).filter(a=>!beforeAch.includes(a.id));
+    if(afterAch.length) achievementUps.push({name:gp.name, ach:afterAch});
   });
   history.push({id:state.game.id,date:new Date().toISOString(),winner:state.game.winner,players:state.game.players.map(p=>({name:p.name,role:p.role,alive:p.alive,eliminatedRound:p.eliminatedRound})),pair:state.game.pair,log:state.game.log});
   saveStats(stats); saveHistory(history);
   if(levelUps.length) setTimeout(()=>sound("levelup"),120); else sound("good");
   const levelHtml=levelUps.length?`<div class="levelup-panel"><h2>✨ Passages de niveau</h2><p class="small">${levelUps.length} joueur${levelUps.length>1?"s":""} ont gagné au moins un niveau.</p>${levelUps.map(item=>`<div class="result-line levelup-line"><b>${item.name}</b><br>${item.ups.map(up=>`<span class="xp">${up}</span>`).join("<br>")}</div>`).join("")}</div>`:"";
-  screen(`<div class="card"><h1>Stats enregistrées ✅</h1><p class="small">La partie a été ajoutée à l'historique.</p>${levelHtml}<button class="btn" onclick="leaderboard()">Voir le classement</button><button class="btn secondary" onclick="home()">Menu</button></div>`);
+  const achHtml=achievementUps.length?`<div class="levelup-panel"><h2>🏅 Succès débloqués</h2>${achievementUps.map(item=>`<div class="result-line levelup-line"><b>${item.name}</b><br>${item.ach.map(a=>`<span class="xp">🏆 ${a.name}</span>`).join("<br>")}</div>`).join("")}</div>`:"";
+  screen(`<div class="card"><h1>Stats enregistrées ✅</h1><p class="small">La partie a été ajoutée à l'historique.</p>${levelHtml}${achHtml}<button class="btn" onclick="leaderboard()">Voir le classement</button><button class="btn secondary" onclick="home()">Menu</button></div>`);
 }
 
 function leaderboard(){
@@ -460,7 +566,7 @@ function playerStats(name,tab="survivor"){
   const isS=tab==="survivor", data=isS?p.survivor:p.killer;
   const lvl=levelFromXP(data.xp), rank=isS?survivorRank(lvl):killerRank(lvl);
   const winrate=data.games?Math.round((data.wins/data.games)*100):0;
-  screen(`<div class="card"><h1>${p.name}</h1>${xpCard(p.totalXP,"Niveau général","⭐")}<p class="small">🔥 Série générale : ${p.streak} • Record général : ${p.bestStreak}</p>
+  screen(`<div class="card"><div class="profile-banner" style="background:${getBanner(p.cosmetics.banner).css}"><h1>${p.name}</h1><div class="profile-badges">${(p.cosmetics.badges||[]).slice(0,3).map(id=>`<span>${getBadge(id)?.icon||"🏅"}</span>`).join("")}</div></div>${xpCard(p.totalXP,"Niveau général","⭐")}<p class="small">🔥 Série générale : ${p.streak} • Record général : ${p.bestStreak}</p>
     <div class="tabs"><button class="tab ${isS?"active":""}" onclick="playerStats('${name.replaceAll("'","\\'")}','survivor')">🛡️ Survivant</button><button class="tab ${!isS?"active":""}" onclick="playerStats('${name.replaceAll("'","\\'")}','killer')">🔪 Tueur</button></div>
     ${xpCard(data.xp,isS?"Niveau Survivant":"Niveau Tueur",isS?"🛡️":"🔪",rank)}
     <div class="statbox"><div class="stat"><span class="small">Parties</span><b>${data.games}</b></div><div class="stat"><span class="small">Victoires</span><b>${data.wins}</b></div><div class="stat"><span class="small">Défaites</span><b>${data.losses}</b></div><div class="stat"><span class="small">Winrate</span><b>${winrate}%</b></div>
@@ -468,6 +574,78 @@ function playerStats(name,tab="survivor"){
     <div class="stat"><span class="small">Série actuelle</span><b>${data.currentStreak}</b></div><div class="stat"><span class="small">Record d'affilée</span><b>${data.bestStreak}</b></div></div>
     <button class="btn ghost" onclick="statsList()">Retour stats</button></div>`);
 }
+
+function achievementsList(){
+  const stats=Object.values(loadStats()).map(normalizePlayerStats).sort((a,b)=>a.name.localeCompare(b.name));
+  const lines=stats.length?stats.map(p=>{
+    const rewards=getUnlockedRewards(p);
+    return `<div class="listitem" onclick="playerAchievements('${p.name.replaceAll("'","\\'")}')"><div><b>${p.name}</b><br><span class="small">${rewards.unlocked.length} / ${achievements.length} succès</span></div><span>›</span></div>`;
+  }).join(""):`<p class="small">Aucun joueur enregistré.</p>`;
+  screen(`<div class="card"><h1>🏅 Succès</h1><p class="small">Choisis un joueur pour voir ses défis, récompenses, bannières et badges.</p>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
+}
+function playerAchievements(name,cat="Tous"){
+  const p=normalizePlayerStats(loadStats()[name]); if(!p)return achievementsList();
+  const rewards=getUnlockedRewards(p);
+  const cats=["Tous",...Array.from(new Set(achievements.map(a=>a.cat)))];
+  const filtered=achievements.filter(a=>cat==="Tous"||a.cat===cat);
+  const tabs=`<div class="tabs">${cats.slice(0,3).map(c=>`<button class="tab ${cat===c?"active":""}" onclick="playerAchievements('${name.replaceAll("'","\\'")}','${c}')">${c}</button>`).join("")}</div>
+  <div class="tabs">${cats.slice(3,6).map(c=>`<button class="tab ${cat===c?"active":""}" onclick="playerAchievements('${name.replaceAll("'","\\'")}','${c}')">${c}</button>`).join("")}</div>`;
+  const lines=filtered.map(a=>{
+    const ok=rewards.unlocked.some(u=>u.id===a.id);
+    return `<div class="result-line ${ok?"achievement-ok":"achievement-locked"}">
+      <b>${ok?"✅":"🔒"} ${a.name}</b><br>
+      <span class="small">${a.desc}</span><br>
+      <span class="xp">Récompense : ${a.reward?.banner?"🖼️ Bannière ":""}${a.reward?.badge?"🏅 Badge ":""}${a.reward?.shards?`🩸 ${a.reward.shards} éclats`:""}</span>
+    </div>`;
+  }).join("");
+  screen(`<div class="card"><h1>🏅 ${name}</h1><p class="small">${rewards.unlocked.length} / ${achievements.length} succès débloqués • 🩸 ${rewards.shards} éclats gagnés</p>${tabs}${lines}<button class="btn ghost" onclick="achievementsList()">Retour</button></div>`);
+}
+function collectionList(){
+  const stats=Object.values(loadStats()).map(normalizePlayerStats).sort((a,b)=>a.name.localeCompare(b.name));
+  const lines=stats.length?stats.map(p=>`<div class="listitem" onclick="playerCollection('${p.name.replaceAll("'","\\'")}')"><div><b>${p.name}</b><br><span class="small">Bannières, badges et profil</span></div><span>›</span></div>`).join(""):`<p class="small">Aucun joueur enregistré.</p>`;
+  screen(`<div class="card"><h1>🎁 Collection</h1>${lines}<button class="btn ghost" onclick="home()">Retour</button></div>`);
+}
+function playerCollection(name){
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]); if(!p)return collectionList();
+  const rewards=getUnlockedRewards(p);
+  const bannerButtons=cosmetics.banners.map(b=>{
+    const unlocked=rewards.banners.includes(b.id);
+    return `<button class="btn ${p.cosmetics.banner===b.id?"":"secondary"}" ${unlocked?"":"disabled"} onclick="equipBanner('${name.replaceAll("'","\\'")}','${b.id}')">🖼️ ${b.name} ${unlocked?"":"🔒"}</button>`;
+  }).join("");
+  const badgeButtons=cosmetics.badges.map(b=>{
+    const unlocked=rewards.badges.includes(b.id);
+    const equipped=(p.cosmetics.badges||[]).includes(b.id);
+    return `<button class="btn ${equipped?"":"secondary"}" ${unlocked?"":"disabled"} onclick="toggleBadge('${name.replaceAll("'","\\'")}','${b.id}')">${b.icon} ${b.name} ${equipped?"✅":unlocked?"":"🔒"}</button>`;
+  }).join("");
+  screen(`<div class="card">
+    <div class="profile-banner" style="background:${getBanner(p.cosmetics.banner).css}">
+      <h1>${p.name}</h1>
+      <div class="profile-badges">${(p.cosmetics.badges||[]).slice(0,3).map(id=>`<span>${getBadge(id)?.icon||"🏅"}</span>`).join("")}</div>
+    </div>
+    <p class="small">Débloqué : ${rewards.banners.length}/${cosmetics.banners.length} bannières • ${rewards.badges.length}/${cosmetics.badges.length} badges</p>
+    <h2>🖼️ Bannières</h2>${bannerButtons}
+    <h2>🏅 Badges affichés</h2><p class="small">Tu peux équiper jusqu'à 3 badges.</p>${badgeButtons}
+    <button class="btn ghost" onclick="collectionList()">Retour</button>
+  </div>`);
+}
+function equipBanner(name,bannerId){
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]); const rewards=getUnlockedRewards(p);
+  if(!rewards.banners.includes(bannerId)) return;
+  p.cosmetics.banner=bannerId; stats[name]=p; saveStats(stats); playerCollection(name);
+}
+function toggleBadge(name,badgeId){
+  const stats=loadStats(); const p=normalizePlayerStats(stats[name]); const rewards=getUnlockedRewards(p);
+  if(!rewards.badges.includes(badgeId)) return;
+  p.cosmetics.badges ??= [];
+  if(p.cosmetics.badges.includes(badgeId)){
+    p.cosmetics.badges=p.cosmetics.badges.filter(id=>id!==badgeId);
+  } else {
+    if(p.cosmetics.badges.length>=3) p.cosmetics.badges.shift();
+    p.cosmetics.badges.push(badgeId);
+  }
+  stats[name]=p; saveStats(stats); playerCollection(name);
+}
+
 function historyList(){
   const h=loadHistory().slice().reverse();
   const lines=h.length?h.map((g,i)=>`<div class="listitem" onclick="historyDetail('${g.id}')"><div><b>${new Date(g.date).toLocaleString("fr-FR")}</b><br><span class="small">${g.players.length} joueurs • ${g.winner==="survivors"?"Survivants":"Tueurs"} gagnent</span></div><span>›</span></div>`).join(""):`<p class="small">Aucune partie enregistrée.</p>`;
