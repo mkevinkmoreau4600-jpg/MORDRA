@@ -14,6 +14,187 @@ const historyKey = "mordra2_history";
 const settingsKey = "mordra2_settings";
 let state = { players: [], game: null, timers: [] };
 
+
+/* =========================================================
+   MORDRA Test 4.00 — Audio menu principal
+   Musique continue : DÉMARRER → Chargement → Menu principal
+========================================================= */
+const audioSettingsKey = "mordra_400_audio_settings";
+let menuMusic = null;
+let menuMusicFadeTimer = null;
+let menuMusicUnlocked = false;
+let menuMusicStarted = false;
+
+let uiSfx = {};
+let lastUiSfx = { key:null, time:0 };
+function ensureUiSfx(){
+  if(uiSfx.click) return uiSfx;
+  uiSfx = {
+    start: new Audio("assets/ui-start.mp3"),
+    click: new Audio("assets/ui-click.mp3"),
+    back: new Audio("assets/ui-back.mp3"),
+    locked: new Audio("assets/ui-locked.mp3")
+  };
+  Object.values(uiSfx).forEach(a=>{ a.preload = "auto"; a.volume = .8; });
+  return uiSfx;
+}
+function playUiSfx(kind="click"){
+  try{
+    const cfg = getAudioSettings();
+    if(!cfg.sfxEnabled || (cfg.sfxVolume ?? 0) <= 0) return;
+    const now = performance.now();
+    if(lastUiSfx.key === kind && now - lastUiSfx.time < 90) return;
+    lastUiSfx = { key: kind, time: now };
+    const bank = ensureUiSfx();
+    const a = bank[kind] || bank.click;
+    a.pause();
+    a.currentTime = 0;
+    a.volume = Math.max(0, Math.min(1, cfg.sfxVolume ?? .8));
+    const p = a.play();
+    if(p && p.catch) p.catch(()=>{});
+  }catch(e){}
+}
+function lockedFeedback(el, message="Disponible dans une prochaine mise à jour."){
+  try{ playUiSfx("locked"); }catch(e){}
+  try{
+    const card = el?.closest?.("button,.mode-choice-card,.shop-item,.pass-tier,.achievement-card,.listitem") || el;
+    if(card){
+      card.classList.remove("locked-shake");
+      void card.offsetWidth;
+      card.classList.add("locked-shake");
+      setTimeout(()=>card.classList.remove("locked-shake"), 380);
+    }
+  }catch(e){}
+  toast(message);
+}
+
+function getAudioSettings(){
+  const cfg = loadJSON(audioSettingsKey, { musicEnabled:true, musicVolume:.65, sfxEnabled:true, sfxVolume:.8, vibrationsEnabled:true });
+  // Migration douce : les anciennes versions n'avaient pas toujours les curseurs.
+  if(typeof cfg.musicVolume !== "number") cfg.musicVolume = .65;
+  if(typeof cfg.sfxVolume !== "number") cfg.sfxVolume = .8;
+  if(typeof cfg.vibrationsEnabled !== "boolean") cfg.vibrationsEnabled = true;
+  return cfg;
+}
+function setAudioSettings(v){ localStorage.setItem(audioSettingsKey, JSON.stringify(v)); }
+function ensureMenuMusic(){
+  if(menuMusic) return menuMusic;
+  menuMusic = new Audio("assets/Black Glass Hall.mp3");
+  menuMusic.loop = true;
+  menuMusic.preload = "auto";
+  menuMusic.volume = 0;
+  return menuMusic;
+}
+function fadeMenuMusic(target=1, duration=650){
+  const cfg = getAudioSettings();
+  const music = ensureMenuMusic();
+  target = cfg.musicEnabled ? Math.max(0, Math.min(1, target * (cfg.musicVolume ?? 1))) : 0;
+  clearInterval(menuMusicFadeTimer);
+  const start = music.volume || 0;
+  const startTime = performance.now();
+  if(cfg.musicEnabled && music.paused){
+    const p = music.play();
+    if(p && p.catch) p.catch(()=>{});
+  }
+  menuMusicFadeTimer = setInterval(()=>{
+    const t = Math.min(1, (performance.now()-startTime)/duration);
+    music.volume = start + (target-start)*t;
+    if(t >= 1){
+      clearInterval(menuMusicFadeTimer);
+      if(target <= 0.001 && !cfg.musicEnabled) music.pause();
+    }
+  }, 30);
+}
+function startMenuMusic(target=1){
+  const cfg = getAudioSettings();
+  const music = ensureMenuMusic();
+  if(!cfg.musicEnabled) return;
+  const p = music.play();
+  menuMusicStarted = true;
+  if(p && p.catch) p.catch(()=>{});
+  fadeMenuMusic(target, 900);
+}
+function lowerMenuMusicForLoading(){ fadeMenuMusic(.85, 900); }
+function restoreMenuMusic(){ fadeMenuMusic(1, 900); updateMusicToggleIcon(); }
+function stopMenuMusicForGame(){ fadeMenuMusic(0, 1600); }
+function toggleMenuMusic(){
+  const cfg = getAudioSettings();
+  cfg.musicEnabled = !cfg.musicEnabled;
+  setAudioSettings(cfg);
+  if(cfg.musicEnabled) startMenuMusic(1); else fadeMenuMusic(0, 500);
+  updateMusicToggleIcon();
+}
+function setMusicVolume(value){
+  const cfg = getAudioSettings();
+  cfg.musicVolume = Math.max(0, Math.min(1, Number(value) / 100));
+  cfg.musicEnabled = cfg.musicVolume > 0;
+  setAudioSettings(cfg);
+  const label = document.getElementById("musicVolumeLabel");
+  if(label) label.textContent = Math.round(cfg.musicVolume * 100) + "%";
+  updateMusicToggleIcon();
+  if(cfg.musicEnabled) fadeMenuMusic(1, 120); else fadeMenuMusic(0, 250);
+}
+function setSfxVolume(value){
+  const cfg = getAudioSettings();
+  cfg.sfxVolume = Math.max(0, Math.min(1, Number(value) / 100));
+  cfg.sfxEnabled = cfg.sfxVolume > 0;
+  setAudioSettings(cfg);
+  const label = document.getElementById("sfxVolumeLabel");
+  if(label) label.textContent = Math.round(cfg.sfxVolume * 100) + "%";
+  updateMusicToggleIcon();
+}
+function toggleVibrationsSetting(){
+  const cfg = getAudioSettings();
+  cfg.vibrationsEnabled = !cfg.vibrationsEnabled;
+  setAudioSettings(cfg);
+  settings();
+}
+function updateMusicToggleIcon(){
+  const btn = document.getElementById("musicToggleBtn");
+  if(!btn) return;
+  const on = !!getAudioSettings().musicEnabled;
+  btn.textContent = on ? "🔊" : "🔇";
+  btn.setAttribute("aria-label", on ? "Couper la musique" : "Activer la musique");
+  btn.classList.toggle("muted", !on);
+}
+function playStartWhoosh(){
+  try{
+    const cfg = getAudioSettings();
+    if(!cfg.sfxEnabled) return;
+    const a = new (window.AudioContext||window.webkitAudioContext)();
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(95, a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(34, a.currentTime + .55);
+    g.gain.setValueAtTime(.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(.08 * (cfg.sfxVolume ?? 1), a.currentTime + .05);
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .62);
+    o.connect(g); g.connect(a.destination); o.start();
+    setTimeout(()=>{ try{o.stop();a.close()}catch{} }, 720);
+  }catch(e){}
+}
+window.addEventListener("pointerdown", ()=>{
+  if(menuMusicUnlocked) return;
+  menuMusicUnlocked = true;
+  if(document.getElementById("mordraStartScreen")) startMenuMusic(1);
+}, {once:true});
+
+document.addEventListener("click", (e)=>{
+  try{
+    const el = e.target.closest("button,.btn,.listitem,.tab,.mini-btn,input[type='range']");
+    if(!el) return;
+    if(el.classList.contains("splash-start-hitbox")) return; // son spécial joué par startButtonTransition
+    if(el.classList.contains("mode-choice-card") && el.classList.contains("is-soon")) return;
+    if(el.disabled || el.getAttribute("aria-disabled") === "true" || el.classList.contains("locked")){
+      lockedFeedback(el);
+      return;
+    }
+    if(el.classList.contains("top-back") || el.classList.contains("mode-back-btn") || el.classList.contains("ng-back") || /Retour/i.test(el.textContent || "")) playUiSfx("back");
+    else playUiSfx("click");
+  }catch(_e){}
+}, true);
+
 const words = [
 ["Pizza","Calzone"],["Lion","Tigre"],["Voiture","Moto"],["Café","Thé"],["Plage","Piscine"],["Zombie","Vampire"],["Ferrari","Lamborghini"],["Minecraft","Roblox"],["Paris","Londres"],["Soleil","Lune"],["Chien","Loup"],["Chat","Renard"],["Cinéma","Théâtre"],["Football","Rugby"],["Riz","Pâtes"],["Glace","Sorbet"],["Avion","Hélicoptère"],["Train","Métro"],["Hôpital","Clinique"],["Policier","Gendarme"],["Forêt","Jungle"],["Dragon","Dinosaure"],["Requin","Orque"],["Piano","Guitare"],["Téléphone","Tablette"],["Netflix","YouTube"],["Burger","Kebab"],["Tacos","Burrito"],["Crêpe","Gaufre"],["Bateau","Sous-marin"],["Prison","Commissariat"],["Banque","Coffre"],["Fantôme","Esprit"],["Serpent","Python"],["Aigle","Faucon"],["Volcan","Montagne"],["Neige","Glace"],["Orage","Tempête"],["Bougie","Lampe"],["Couteau","Épée"]
 ];
@@ -54,7 +235,13 @@ function saveStats(v){ saveJSON(saveKey,v); }
 function loadHistory(){ return loadJSON(historyKey,[]); }
 function saveHistory(v){ saveJSON(historyKey,v); }
 function toast(t="Sauvegardé ✅"){ let el=document.getElementById("saveToast"); if(!el){el=document.createElement("div");el.id="saveToast";document.body.appendChild(el)} el.className="save-toast show"; el.textContent=t; setTimeout(()=>el.className="save-toast",1200); }
-function sound(type="click"){ try{ const a=new (window.AudioContext||window.webkitAudioContext)(); const o=a.createOscillator(); const g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value= type==="bad"?120:type==="level"?620:260; g.gain.value=.04; o.start(); setTimeout(()=>{o.stop();a.close()},90)}catch{} }
+function sound(type="click"){
+  const map = {
+    click:"click", menu:"click", level:"click", good:"click", vote:"click", reveal:"click", tick:"click",
+    bad:"locked", locked:"locked", start:"start", back:"back"
+  };
+  playUiSfx(map[type] || "click");
+}
 function levelXP(l){return 100+Math.floor(l*l*45)}
 function levelFromXP(xp){let l=1, r=xp||0; while(r>=levelXP(l)&&l<100){r-=levelXP(l);l++} return l}
 function xpProgress(xp){let l=1,r=xp||0; while(r>=levelXP(l)&&l<100){r-=levelXP(l);l++} return {l,cur:r,next:levelXP(l),pct:Math.min(100,Math.round(r/levelXP(l)*100))}}
@@ -91,27 +278,189 @@ function playerCard(p){
   </div>`;
 }
 function intro(){
-  screen(`<div class="loading"><div class="loading-center"><div class="loading-logo">MORDRA</div><div class="loading-sub">Chargement...</div><div class="loading-text" id="lt">Chargement des survivants...</div><div class="bar"><div id="lf"></div></div><div class="percent" id="lp">0%</div></div><div class="credit-bottom"><span>A game imagined by</span><b>Kevin Moreau</b><small>Developed with the assistance of ChatGPT</small></div></div>`);
-  const texts=["Chargement des survivants...","Préparation des tueurs...","Ouverture du Blood Market...","Chargement des profils...","Vérification du jeu...","Bienvenue dans MORDRA..."];
-  let p=0;
-  const i=setInterval(()=>{
-    p+=Math.floor(4+Math.random()*8);
-    if(p>100)p=100;
-    const f=document.getElementById("lf");
-    const pct=document.getElementById("lp");
-    const t=document.getElementById("lt");
-    if(f) f.style.width=p+"%";
-    if(pct) pct.textContent=p+"%";
-    if(t) t.textContent=texts[Math.min(texts.length-1,Math.floor(p/18))];
-    if(p>=100){
-      clearInterval(i);
-      setTimeout(startScreen,550);
-    }
-  },190);
+  // Écran de pré-lancement rapide : on garde l'accueil officiel avant le menu.
+  startScreen();
 }
 
-function startScreen(){ screen(`<div class="start-screen"><div><div class="logo">MORDRA</div><div class="small">Le jeu de déduction horrifique</div><button class="btn start-btn" onclick="home()">DÉMARRER</button><div class="small">Version 3.2 Victory Chests</div></div></div>`)}
-function home(){ try{clearDiscussionTimer()}catch(e){}  screen(`<div class="card"><div class="logo">MORDRA</div><p class="small" style="text-align:center">Version 3.2 Victory Chests</p><button class="btn" onclick="modeSelect()">🎮 Nouvelle partie</button><button class="btn secondary" onclick="progression()">🏆 Progression</button><button class="btn secondary" onclick="statsList()">📊 Statistiques</button><button class="btn secondary" onclick="achievementsMenu()">🏅 Succès</button><button class="btn secondary" onclick="collectionSelect()">🎁 Collection</button><button class="btn secondary" onclick="shopHub()">🛒 Boutique</button><button class="btn ghost" onclick="settings()">⚙️ Paramètres</button></div>`);}
+function officialLoading(nextAction){
+  lowerMenuMusicForLoading();
+  screen(`<div class="mordra-loading-screen" id="officialLoadingScreen">
+    <div class="loading-case-bg" aria-hidden="true"></div>
+    <div class="loading-smoke smoke-left" aria-hidden="true"></div>
+    <div class="loading-smoke smoke-right" aria-hidden="true"></div>
+    <div class="loading-smoke smoke-center" aria-hidden="true"></div>
+    <div class="loading-red-particles" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="loading-breath-glow" aria-hidden="true"></div>
+    <div class="loading-ui-mask" aria-hidden="true"></div>
+    <div class="loading-final-flash" aria-hidden="true"></div>
+    <div class="loading-ui-premium">
+      <h1>PRÉPARATION DE L’ENQUÊTE...</h1>
+      <div class="premium-progress-line">
+        <div class="premium-progress-fill" id="premiumLoadingFill"></div>
+        <div class="premium-progress-star" id="premiumLoadingStar"></div>
+      </div>
+      <div class="premium-percent" id="premiumLoadingPercent">0%</div>
+      <div class="premium-status-box">
+        <span class="premium-search-icon">⌕</span>
+        <span id="premiumLoadingStatus">OUVERTURE DU DOSSIER...</span>
+      </div>
+      <div class="premium-tip">
+        <b>CONSEIL :</b>
+        <span>Le joueur le plus calme n’est pas toujours <em>innocent</em>.</span>
+      </div>
+    </div>
+  </div>`);
+
+  const states = [
+    { at: 0, text: "OUVERTURE DU DOSSIER..." },
+    { at: 18, text: "ANALYSE DES SUSPECTS..." },
+    { at: 38, text: "VÉRIFICATION DES RÔLES..." },
+    { at: 58, text: "RECHERCHE DES INDICES..." },
+    { at: 75, text: "PRÉPARATION DE L’ENQUÊTE..." },
+    { at: 91, text: "VALIDATION DU DOSSIER..." },
+    { at: 99, text: "L’ENQUÊTE COMMENCE..." }
+  ];
+
+  const minDuration = 11800; // durée cinéma : presque 12 secondes pour profiter de l'écran
+  const start = performance.now();
+  let displayed = 0;
+
+  function cinematicProgress(t){
+    const x = Math.min(1, Math.max(0, t / minDuration));
+    let p;
+    if(x < 0.14) p = 8 + (x / 0.14) * 12;                         // 8 -> 20
+    else if(x < 0.34) p = 20 + ((x - 0.14) / 0.20) * 18;            // 20 -> 38
+    else if(x < 0.43) p = 38 + ((x - 0.34) / 0.09) * 3;             // pause visible 38 -> 41
+    else if(x < 0.62) p = 41 + ((x - 0.43) / 0.19) * 24;            // 41 -> 65
+    else if(x < 0.72) p = 65 + ((x - 0.62) / 0.10) * 5;             // pause visible 65 -> 70
+    else if(x < 0.88) p = 70 + ((x - 0.72) / 0.16) * 20;            // 70 -> 90
+    else if(x < 0.96) p = 90 + ((x - 0.88) / 0.08) * 5;             // pause visible 90 -> 95
+    else p = 95 + ((x - 0.96) / 0.04) * 5;                          // 95 -> 100
+    return Math.min(100, Math.floor(p));
+  }
+
+  function updateLoading(){
+    const elapsed = performance.now() - start;
+    let p = cinematicProgress(elapsed);
+    if(p < displayed) p = displayed;
+    displayed = p;
+
+    const fill = document.getElementById("premiumLoadingFill");
+    const star = document.getElementById("premiumLoadingStar");
+    const pct = document.getElementById("premiumLoadingPercent");
+    const status = document.getElementById("premiumLoadingStatus");
+    const loadingScreen = document.getElementById("officialLoadingScreen");
+
+    if(fill) fill.style.width = p + "%";
+    if(star) star.style.left = `calc(${p}% - 9px)`;
+    if(pct) pct.textContent = p + "%";
+    if(status){
+      let current = states[0].text;
+      for(const item of states){ if(p >= item.at) current = item.text; }
+      status.textContent = current;
+    }
+    if(loadingScreen){
+      loadingScreen.style.setProperty("--loading-progress", p / 100);
+      if(p >= 90) loadingScreen.classList.add("loading-almost-done");
+    }
+
+    if(elapsed < minDuration || p < 100){
+      requestAnimationFrame(updateLoading);
+      return;
+    }
+
+    if(loadingScreen){
+      loadingScreen.classList.add("loading-complete");
+      setTimeout(()=>loadingScreen.classList.add("loading-fadeout"), 650);
+    }
+
+    setTimeout(()=>{
+      try{ (nextAction || home)(); }catch(e){ home(); }
+      setTimeout(()=>{
+        const app = document.getElementById("app");
+        if(app) app.classList.add("menu-soft-enter");
+        setTimeout(()=>{ if(app) app.classList.remove("menu-soft-enter"); }, 900);
+      }, 20);
+    }, 1250);
+  }
+
+  requestAnimationFrame(updateLoading);
+}
+
+function startScreen(){
+  screen(`<div class="mordra-splash-screen" id="mordraStartScreen">
+    <div class="splash-frame">
+      <div class="splash-bg" aria-hidden="true"></div>
+      <div class="splash-fog fog-a" aria-hidden="true"></div>
+      <div class="splash-fog fog-b" aria-hidden="true"></div>
+      <div class="splash-fog fog-c" aria-hidden="true"></div>
+      <div class="splash-transition-smoke" aria-hidden="true"></div>
+      <div class="splash-particles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="splash-glow" aria-hidden="true"></div>
+      <div class="splash-click-flash" aria-hidden="true"></div>
+      <button class="splash-start-hitbox" onclick="startButtonTransition()" aria-label="Démarrer MORDRA"></button>
+    </div>
+  </div>`)
+  setTimeout(()=>startMenuMusic(1), 120);
+}
+
+function startButtonTransition(){
+  const splash=document.getElementById("mordraStartScreen");
+  if(!splash) return officialLoading();
+  if(splash.dataset.busy==="1") return;
+  splash.dataset.busy="1";
+  splash.classList.add("start-clicked");
+  startMenuMusic(1);
+  setTimeout(()=>lowerMenuMusicForLoading(), 260);
+  playUiSfx("start");
+  playStartWhoosh();
+  setTimeout(()=>{ officialLoading(); }, 1450);
+}
+function home(){
+  restoreMenuMusic();
+  try{
+    if(state.championship && state.championship.pending && !state.championship.active){
+      state.championship.pending=false;
+      try{localStorage.removeItem("mordra_400_championship")}catch(_e){}
+    }
+    clearDiscussionTimer()
+  }catch(e){}
+  const menuItems=[
+    {label:"Nouvelle partie", icon:"✥", action:"modeSelect()", primary:true},
+    {label:"Mode Championnat", icon:"♛", action:"championshipMenu400()", primary:true},
+    {label:"Progression", icon:"▥", action:"progression()"},
+    {label:"Statistiques", icon:"◔", action:"statsList()"},
+    {label:"Succès", icon:"✪", action:"achievementsMenu()"},
+    {label:"Collection", icon:"▣", action:"collectionSelect()"},
+    {label:"Boutique", icon:"🛒", action:"shopHub()"},
+    {label:"Paramètres", icon:"⚙", action:"settings()"}
+  ];
+  screen(`<div class="main-menu-premium screen">
+    <div class="menu-red-vignette" aria-hidden="true"></div>
+    <div class="menu-smoke menu-smoke-a" aria-hidden="true"></div>
+    <div class="menu-smoke menu-smoke-b" aria-hidden="true"></div>
+    <div class="menu-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <section class="menu-phone-frame">
+      <div class="menu-board-bg" aria-hidden="true">
+        <span class="case-note note-left">DISPARITION<br><small>Aucune piste.</small></span>
+        <span class="case-note note-right">SUSPECTS<br><small>Qui ment ?</small></span>
+        <span class="case-thread t1"></span><span class="case-thread t2"></span><span class="case-thread t3"></span>
+      </div>
+      <header class="premium-menu-header">
+<div class="premium-logo"><span>M</span><em>◈</em><span>RDRA</span></div>
+        <p>Menu principal <b>•</b> Version Test 4.00</p>
+      </header>
+      <nav class="premium-menu-buttons" aria-label="Menu principal MORDRA">
+        ${menuItems.map((item,index)=>`<button class="premium-menu-btn ${item.primary?"primary":""}" onclick="${item.action}" style="--i:${index}">
+          <span class="premium-btn-icon">${item.icon}</span>
+          <span class="premium-btn-label">${item.label}</span>
+        </button>`).join("")}
+      </nav>
+    </section>
+  </div>`);
+}
 
 function progression(){screen(`<div class="card">${back()}<h1>🏆 Progression</h1><button class="btn secondary" onclick="leaderboard()">🏆 Classement</button><button class="btn secondary" onclick="hall()">🏛️ Hall of Fame</button><button class="btn secondary" onclick="historyList()">📜 Historique</button></div>`)}
 function statsList(){ const ps=allPlayers(); screen(`<div class="card">${back()}<h1>📊 Statistiques</h1><button class="btn" onclick="newPlayer()">➕ Nouveau joueur</button>${ps.length?ps.map(p=>`<div class="listitem" onclick="playerStats('${p.name.replaceAll("'","\\'")}')"><div><b>${p.name}</b><br><span class="small">${p.games} parties • ${p.totalXP} XP • 🩸 ${p.wallet.shards}</span></div><span>›</span></div>`).join(""):`<p class="small">Aucun joueur.</p>`}</div>`)}
@@ -125,7 +474,7 @@ function historyList(){const h=loadHistory().slice().reverse(); screen(`<div cla
 
 
 /* =========================================================
-   MORDRA 3.2 — SHADOW MODES
+   MORDRA 3.3.2 — SHADOW MODES
    Choix du mode avant la partie.
 ========================================================= */
 
@@ -134,7 +483,7 @@ const mordraModes = {
     id:"classic",
     icon:"🔪",
     name:"Classique",
-    desc:"Le mode original de MORDRA. Les joueurs voient leur rôle et leur mot.",
+    desc:"Mode imposteur pur : les Survivants ont un mot, le Tueur n’a pas de mot.",
     roleMode:"visible",
     minutes:null,
     soon:false
@@ -152,7 +501,7 @@ const mordraModes = {
     id:"blitz",
     icon:"⚡",
     name:"Blitz",
-    desc:"Parties rapides. Discussion réglée automatiquement sur 1 minute.",
+    desc:"Parties rapides. Comme le Classique, le Tueur n’a pas de mot. Discussion à 1 minute.",
     roleMode:"visible",
     minutes:1,
     soon:false
@@ -183,24 +532,42 @@ const mordraModes = {
 function modeSelect(){
   try{ sound("menu"); }catch(e){}
   const modes = Object.values(mordraModes);
-  screen(`<div class="card">${back("home()")}<h1>🎮 Choisis un mode</h1>
-    <p class="small">Sélectionne le style de partie avant de choisir les joueurs.</p>
-    ${modes.map(m=>`
-      <div class="mode-card ${m.soon?"mode-soon":""}" onclick="${m.soon?`modeSoon('${m.name.replaceAll("'","\\'")}')`:`selectMode('${m.id}')`}">
-        <div class="mode-icon">${m.icon}</div>
-        <div class="mode-info">
-          <b>${m.name} ${m.soon?'<span class="soon-badge">Bientôt</span>':""}</b><br>
-          <span class="small">${m.desc}</span>
-        </div>
-        <span>›</span>
-      </div>
-    `).join("")}
+  const iconMap = {
+    classic:"✦",
+    mystery:"◉",
+    blitz:"ϟ",
+    double:"♟",
+    paranormal:"☁",
+    detective:"⌕"
+  };
+  screen(`<div class="mode-select-premium screen">
+    <div class="mode-bg-orb orb-one" aria-hidden="true"></div>
+    <div class="mode-bg-orb orb-two" aria-hidden="true"></div>
+    <div class="mode-castle" aria-hidden="true"></div>
+    <div class="mode-particles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <button class="mode-back-btn" onclick="home()" aria-label="Retour">← <span>Retour</span></button>
+    <div class="mode-top-symbol" aria-hidden="true">☷</div>
+    <header class="mode-header-premium">
+      <h1>Choisis un mode</h1>
+      <p>Sélectionne le style de partie avant de choisir les joueurs.</p>
+    </header>
+    <div class="mode-separator" aria-hidden="true"><span></span><b>◇</b><span></span></div>
+    <section class="mode-card-list" aria-label="Modes de jeu MORDRA">
+      ${modes.map(m=>`
+        <button type="button" class="mode-choice-card ${m.soon?"is-soon":"is-ready"}" ${m.soon?`aria-disabled="true" onclick="modeSoon(this, '${m.name.replaceAll("'","\'")}')"`:`onclick="selectMode('${m.id}')"`}>
+          <span class="mode-choice-icon" aria-hidden="true"><em>${iconMap[m.id]||m.icon}</em></span>
+          <span class="mode-choice-content">
+            <span class="mode-choice-title">${m.name}${m.soon?'<strong class="mode-soon-badge">Bientôt</strong>':""}</span>
+            <span class="mode-choice-desc">${m.desc}</span>
+          </span>
+          <span class="mode-choice-arrow" aria-hidden="true">›</span>
+        </button>
+      `).join("")}
+    </section>
   </div>`);
 }
-
-function modeSoon(name){
-  try{ sound("bad"); }catch(e){}
-  alert(name+" arrive dans une prochaine mise à jour.");
+function modeSoon(el, name){
+  lockedFeedback(el, `${name} arrive dans une prochaine mise à jour.`);
 }
 
 function selectMode(id){
@@ -208,7 +575,66 @@ function selectMode(id){
   setup();
 }
 
-function setup(){try{clearDiscussionTimer()}catch(e){} state.players=[]; screen(`<div class="card">${back()}<h1>🎮 Nouvelle partie</h1><div class="selected-mode-box"><b>${(state.selectedMode||mordraModes.classic).icon} Mode sélectionné : ${(state.selectedMode||mordraModes.classic).name}</b><br><span class="small">${(state.selectedMode||mordraModes.classic).desc}</span><br><span class="xp">${(state.selectedMode||mordraModes.classic).roleMode==="hidden"?"Dévoilement : mot seulement":"Dévoilement : rôle + mot"}</span><br><button class="mini-btn" onclick="modeSelect()">Changer</button></div><label class="small">Joueurs</label><input class="input" id="count" type="number" min="3" max="12" value="4"><label class="small">Tueurs</label><input class="input" id="killers" type="number" min="1" max="3" value="1"><label class="small">Temps discussion/vote (minutes)</label><input class="input" id="minutes" type="number" min="1" max="20" value="${(state.selectedMode&&state.selectedMode.minutes)||3}">    <button class="btn" onclick="selectPlayers()">Continuer</button></div>`)}
+function setup(){
+  try{ clearDiscussionTimer() }catch(e){}
+  state.players=[];
+  const mode = state.selectedMode || mordraModes.classic;
+  const isMystery = mode.roleMode === "hidden";
+  const defaultMinutes = mode.minutes || 3;
+  const ruleText = isMystery ? "Mystère : mot seulement" : (mode.id === "blitz" ? "Blitz : discussion à 1 minute" : "Classique : Tueur sans mot");
+  const modeIcon = mode.id === "mystery" ? "🔮" : (mode.id === "blitz" ? "⚡" : "⚔️");
+  screen(`<div class="newgame-premium">
+    <div class="ng-fog ng-fog-a" aria-hidden="true"></div>
+    <div class="ng-fog ng-fog-b" aria-hidden="true"></div>
+    <div class="ng-particles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <button type="button" class="ng-back" onclick="modeSelect()">← <span>Retour</span></button>
+    <header class="ng-title-wrap">
+      <div class="ng-title-icon" aria-hidden="true">🎮</div>
+      <h1>Nouvelle partie</h1>
+    </header>
+    <section class="ng-mode-card">
+      <div class="ng-mode-head"><span class="ng-mode-symbol">${modeIcon}</span><strong>Mode sélectionné : ${mode.name}</strong></div>
+      <p>${mode.desc}</p>
+      <h2>${ruleText}</h2>
+      <button type="button" class="ng-change-btn" onclick="modeSelect()">Changer</button>
+    </section>
+
+    <section class="ng-settings" aria-label="Réglages de partie">
+      ${setupStepperHTML('count','👥','Joueurs',4,3,12)}
+      ${setupStepperHTML('killers','🗡️','Tueurs',1,1,3)}
+      ${setupStepperHTML('minutes','🕒','Temps discussion/vote (minutes)',defaultMinutes,1,20)}
+    </section>
+
+    <button type="button" class="ng-continue" onclick="selectPlayers()"><span>Continuer</span></button>
+    <div class="ng-footer-mark" aria-hidden="true">MORDRA</div>
+  </div>`);
+}
+
+function setupStepperHTML(id, icon, label, value, min, max){
+  return `<div class="ng-stepper" data-stepper="${id}">
+    <div class="ng-step-icon" aria-hidden="true">${icon}</div>
+    <div class="ng-step-main">
+      <label for="${id}">${label}</label>
+      <input id="${id}" class="ng-value-input" type="number" min="${min}" max="${max}" value="${value}" readonly aria-label="${label}">
+    </div>
+    <div class="ng-step-controls">
+      <button type="button" onclick="adjustSetupValue('${id}',1)">⌃</button>
+      <button type="button" onclick="adjustSetupValue('${id}',-1)">⌄</button>
+    </div>
+  </div>`;
+}
+
+function adjustSetupValue(id, delta){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const min = Number(el.min || 0);
+  const max = Number(el.max || 99);
+  let value = Number(el.value || min) + delta;
+  value = Math.max(min, Math.min(max, value));
+  el.value = value;
+  try{ sound('click') }catch(e){}
+}
+
 function selectPlayers(){
   const count=+document.getElementById("count").value;
   const killers=+document.getElementById("killers").value;
@@ -257,7 +683,7 @@ function toggleSelect(n){
   }
   renderSelectedPlayers();
 }
-function launchGame(){ if(state.players.length!==state.setup.count)return alert("Sélectionne tous les joueurs."); const pair=words[Math.floor(Math.random()*words.length)]; let ids=state.players.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0,state.setup.killers); state.game={id:Date.now(),pair,round:0,winner:null,votes:{},starter:null,roleMode:state.setup?.roleMode||"visible",gameMode:state.setup?.gameMode||"classic",gameModeName:(state.selectedMode||mordraModes.classic).name,discussionMinutes:state.setup?.minutes||3,players:state.players.map((n,i)=>({name:n,role:ids.includes(i)?"killer":"survivor",alive:true}))}; state.game.starter=state.game.players[Math.floor(Math.random()*state.game.players.length)].name; revealPass(0)}
+function launchGame(){ if(state.players.length!==state.setup.count)return alert("Sélectionne tous les joueurs."); stopMenuMusicForGame(); const pair=words[Math.floor(Math.random()*words.length)]; let ids=state.players.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0,state.setup.killers); state.game={id:Date.now(),pair,round:0,winner:null,votes:{},starter:null,roleMode:state.setup?.roleMode||"visible",gameMode:state.setup?.gameMode||"classic",gameModeName:(state.selectedMode||mordraModes.classic).name,discussionMinutes:state.setup?.minutes||3,players:state.players.map((n,i)=>({name:n,role:ids.includes(i)?"killer":"survivor",alive:true}))}; state.game.starter=state.game.players[Math.floor(Math.random()*state.game.players.length)].name; revealPass(0)}
 function revealPass(i){
   try{
     if(!state.game || !state.game.players){
@@ -399,6 +825,10 @@ function saveGame(){
   sound("level");
   const newM=mvp()?.name;
   const rewardHtml=rewards.map(r=>`<div class="result-line"><b>${r.win?"🏆":"🎮"} ${r.name}</b><br><span class="small">${r.role==="killer"?"Tueur":"Survivant"} • ${r.win?"Victoire":"Participation"}</span><br><span class="xp">+${r.xp} XP • +${r.shards} 🩸</span>${r.afterLevel>r.beforeLevel?`<br><span class="xp">✨ Niveau ${r.beforeLevel} ➜ ${r.afterLevel}</span>`:""}</div>`).join("");
+  if(state.championship && state.championship.active){
+    championshipAfterSavedGame400(rewards, rewardHtml, oldM, newM);
+    return;
+  }
   screen(`<div class="card"><h1>Récompenses obtenues 🎁</h1><p class="small">Tout est sauvegardé automatiquement.</p>${rewardHtml}${oldM&&newM&&oldM!==newM?`<div class="mvp-card player-card"><div class="mvp-badge">👑 Nouveau MVP</div><h1>${newM}</h1></div>`:""}<button class="btn" onclick="showVictoryChest()">🎁 Ouvrir le coffre de victoire</button><button class="btn secondary" onclick="leaderboard()">Classement</button><button class="btn ghost" onclick="home()">Menu</button></div>`);
 }
 
@@ -460,7 +890,7 @@ function claimPass(n,l){let p=getPlayer(n); if(p.passClaimed.includes(l))return;
 
 
 /* =========================================================
-   MORDRA 3.2 — ACHIEVEMENTS STABLE
+   MORDRA 3.3.2 — ACHIEVEMENTS STABLE
    Succès uniquement. Ne touche pas au lancement ni aux parties.
 ========================================================= */
 
@@ -656,18 +1086,37 @@ function achievements(){
   return achievementsMenu();
 }
 
-function settings(){screen(`<div class="card">${back()}<h1>⚙️ Paramètres</h1><button class="btn secondary" onclick="dataSettings()">💾 Données</button><button class="btn secondary" onclick="credits()">ℹ️ À propos / Crédits</button></div>`)}
+function settings(){
+  const cfg=getAudioSettings();
+  const musicPct = Math.round((cfg.musicVolume ?? .65) * 100);
+  const sfxPct = Math.round((cfg.sfxVolume ?? .8) * 100);
+  screen(`<div class="card settings-premium">${back()}<h1>⚙️ Paramètres</h1>
+    <h2>Audio</h2>
+    <div class="audio-setting-card">
+      <div class="audio-setting-head"><span>🎵 Musique</span><b id="musicVolumeLabel">${musicPct}%</b></div>
+      <input class="mordra-slider" type="range" min="0" max="100" value="${musicPct}" oninput="setMusicVolume(this.value)">
+      <button class="btn secondary" onclick="toggleMenuMusic(); settings()">${cfg.musicEnabled?"🔊 Musique activée":"🔇 Musique coupée"}</button>
+    </div>
+    <div class="audio-setting-card">
+      <div class="audio-setting-head"><span>🔔 Effets sonores</span><b id="sfxVolumeLabel">${sfxPct}%</b></div>
+      <input class="mordra-slider" type="range" min="0" max="100" value="${sfxPct}" oninput="setSfxVolume(this.value)">
+      <button class="btn secondary" onclick="toggleSfxSetting(); settings()">${cfg.sfxEnabled?"🔔 Effets activés":"🔕 Effets coupés"}</button>
+    </div>
+    <button class="btn secondary" onclick="toggleVibrationsSetting()">${cfg.vibrationsEnabled?"📳 Vibrations activées":"📴 Vibrations coupées"}</button>
+    <button class="btn secondary" onclick="dataSettings()">💾 Données</button><button class="btn secondary" onclick="credits()">ℹ️ À propos / Crédits</button></div>`)}
+function toggleSfxSetting(){ const cfg=getAudioSettings(); cfg.sfxEnabled=!cfg.sfxEnabled; setAudioSettings(cfg); }
+
 function dataSettings(){screen(`<div class="card">${back("settings()")}<h1>💾 Données</h1><div class="success-box">✅ Sauvegarde automatique activée</div><p class="small">Tout est enregistré automatiquement sur cet appareil.</p><button class="btn secondary" onclick="exportData()">📤 Exporter</button><button class="btn secondary" onclick="importData()">📥 Importer</button><button class="btn danger" onclick="resetData()">🗑️ Réinitialiser</button></div>`)}
 function exportData(){const data=JSON.stringify({stats:loadStats(),history:loadHistory()},null,2); navigator.clipboard?.writeText(data).then(()=>alert("Copié ✅")).catch(()=>prompt("Copie tes données :",data))}
 function importData(){try{const t=prompt("Colle tes données :"); if(!t)return; const d=JSON.parse(t); if(d.stats)saveStats(d.stats); if(d.history)saveHistory(d.history); home()}catch(e){alert("Import impossible.")}}
 function resetData(){if(confirm("Tout effacer ?")&&confirm("Vraiment tout remettre à zéro ?")){localStorage.removeItem(saveKey);localStorage.removeItem(historyKey);home()}}
-function credits(){screen(`<div class="card">${back("settings()")}<div class="logo">MORDRA</div><p class="small" style="text-align:center">Version 3.2 Victory Chests</p><div class="listitem"><div><b>AN ORIGINAL GAME BY</b><br>Kevin Moreau</div></div><div class="listitem"><div><b>DEVELOPED WITH THE ASSISTANCE OF</b><br>ChatGPT</div></div></div>`)}
+function credits(){screen(`<div class="card">${back("settings()")}<div class="logo">MORDRA</div><p class="small" style="text-align:center">Version Test 4.00</p><div class="listitem"><div><b>AN ORIGINAL GAME BY</b><br>Kevin Moreau</div></div><div class="listitem"><div><b>DEVELOPED WITH THE ASSISTANCE OF</b><br>ChatGPT</div></div></div>`)}
 intro();
 
 
 
 /* =========================================================
-   MORDRA 3.2 — REVEAL BUTTON FIX
+   MORDRA 3.3.2 — REVEAL BUTTON FIX
    Réparation ciblée du bouton Dévoiler.
 ========================================================= */
 
@@ -785,7 +1234,7 @@ function discussion(){
 
 
 /* =========================================================
-   MORDRA 3.2 — NEW PLAYER FLOW FIX
+   MORDRA 3.3.2 — NEW PLAYER FLOW FIX
    Corrige ajout joueur depuis Nouvelle Partie.
 ========================================================= */
 
@@ -865,7 +1314,7 @@ function quickAddPlayer(){
 
 
 /* =========================================================
-   MORDRA 3.2 — DISCUSSION TIMER
+   MORDRA 3.3.2 — DISCUSSION TIMER
    Compte à rebours pendant la discussion.
 ========================================================= */
 
@@ -971,7 +1420,7 @@ function discussion(){
 
 
 /* =========================================================
-   MORDRA 3.2 — VERDICT CINEMATIC
+   MORDRA 3.3.2 — VERDICT CINEMATIC
    Suspense après les votes avant le résultat.
 ========================================================= */
 
@@ -1032,7 +1481,7 @@ function showVerdictResultThen(action){
 
 
 /* =========================================================
-   MORDRA 3.2 — VICTORY CHESTS
+   MORDRA 3.3.2 — VICTORY CHESTS
    Coffre équilibré pour le meilleur joueur gagnant.
 ========================================================= */
 
@@ -1118,13 +1567,53 @@ function bestWinnerForChest(){
   return scored[0].name;
 }
 
+
+function championshipChestReturnButton400(){
+  try{
+    const c = ensureChampState400();
+    if(c && c.active){
+      return `<button class="btn secondary" onclick="championshipRoundResult400()">↩️ Retour au championnat</button>`;
+    }
+  }catch(e){}
+  return `<button class="btn secondary" onclick="leaderboard()">Voir le classement</button>`;
+}
+function championshipChestAlreadyClaimed400(){
+  try{
+    const c = ensureChampState400();
+    if(!c || !c.active) return false;
+    c.chestsClaimed = c.chestsClaimed || {};
+    return !!c.chestsClaimed[String(c.currentRound)];
+  }catch(e){ return false; }
+}
+function championshipMarkChestClaimed400(){
+  try{
+    const c = ensureChampState400();
+    if(!c || !c.active) return;
+    c.chestsClaimed = c.chestsClaimed || {};
+    c.chestsClaimed[String(c.currentRound)] = true;
+    champSave400();
+  }catch(e){}
+}
+
 function showVictoryChest(){
+  if(championshipChestAlreadyClaimed400()){
+    screen(`<div class="card mobile-center-card chest-screen">
+      <h1>✅ Coffre déjà ouvert</h1>
+      <p class="small">Le coffre de cette manche a déjà été récupéré. Impossible de le prendre plusieurs fois.</p>
+      ${championshipChestReturnButton400()}
+      <button class="btn ghost" onclick="home()">Menu</button>
+    </div>`);
+    return;
+  }
+
   const winnerName = bestWinnerForChest();
   if(!winnerName){
+    if(state.championship && state.championship.active) return championshipRoundResult400();
     home();
     return;
   }
 
+  championshipMarkChestClaimed400();
   const reward = computeChestReward(winnerName);
   if(!reward){
     home();
@@ -1163,7 +1652,491 @@ function openVictoryChest(winnerName,type,shards,cosmeticId){
     </div>
 
     <p class="small">Récompense sauvegardée automatiquement.</p>
-    <button class="btn" onclick="showVictoryChest()">🎁 Ouvrir le coffre de victoire</button><button class="btn secondary" onclick="leaderboard()">Voir le classement</button>
+    ${championshipChestReturnButton400()}
     <button class="btn secondary" onclick="home()">Menu</button>
   </div>`);
 }
+
+
+/* =========================================================
+   MORDRA 3.3.2 — WORD BALANCE FIX
+   Classique/Blitz : Tueur sans mot + anti-répétition.
+========================================================= */
+
+const WORD_HISTORY_KEY_331 = "mordra_331_word_history";
+const WORD_HISTORY_LIMIT_331 = 35;
+
+function normalizePairKey331(pair){
+  const a = String(pair?.[0] || "").trim().toLowerCase();
+  const b = String(pair?.[1] || "").trim().toLowerCase();
+  return [a,b].sort().join("::");
+}
+function exactPairKey331(pair){
+  return String(pair?.[0] || "").trim().toLowerCase()+"::"+String(pair?.[1] || "").trim().toLowerCase();
+}
+function loadWordHistory331(){
+  return loadJSON(WORD_HISTORY_KEY_331,[]);
+}
+function saveWordHistory331(hist){
+  saveJSON(WORD_HISTORY_KEY_331,(Array.isArray(hist)?hist:[]).slice(-WORD_HISTORY_LIMIT_331));
+}
+function wordDistanceScore331(pair){
+  const a = String(pair?.[0]||"").toLowerCase();
+  const b = String(pair?.[1]||"").toLowerCase();
+  let score = 0;
+  if(a[0] && a[0] === b[0]) score -= 2;
+  if(Math.abs(a.length-b.length) <= 1) score -= 1;
+  if(a.includes(b.slice(0,3)) || b.includes(a.slice(0,3))) score -= 2;
+  const tooClose = ["glace|sorbet","sorbet|glace","crêpe|gaufre","gaufre|crêpe","riz|pâtes","pâtes|riz","lion|tigre","tigre|lion","chat|renard","renard|chat","chien|loup","loup|chien","café|thé","thé|café"];
+  if(tooClose.includes(a+"|"+b)) score -= 6;
+  return score;
+}
+function pickPairBalanced331(){
+  const all = Array.isArray(words) ? words.filter(p=>Array.isArray(p) && p.length>=2) : [["Pomme","Banane"]];
+  const hist = loadWordHistory331();
+  const blocked = new Set(hist.map(h=>h.u));
+  let pool = all.filter(p=>!blocked.has(normalizePairKey331(p)));
+
+  if(pool.length < Math.min(10, all.length)){
+    const recent = new Set(hist.slice(-10).map(h=>h.u));
+    pool = all.filter(p=>!recent.has(normalizePairKey331(p)));
+  }
+  if(!pool.length) pool = all;
+
+  const weighted = [];
+  pool.forEach(p=>{
+    const score = wordDistanceScore331(p);
+    const weight = score <= -5 ? 1 : score <= -2 ? 2 : 4;
+    for(let i=0;i<weight;i++) weighted.push(p);
+  });
+
+  const pair = weighted[Math.floor(Math.random()*weighted.length)] || pool[Math.floor(Math.random()*pool.length)] || all[0];
+  hist.push({u:normalizePairKey331(pair), e:exactPairKey331(pair), at:Date.now()});
+  saveWordHistory331(hist);
+  return pair;
+}
+function killerGetsWord331(){
+  const mode = state?.game?.gameMode || state?.setup?.gameMode || "classic";
+  const roleMode = state?.game?.roleMode || state?.setup?.roleMode || "visible";
+  if(mode === "mystery" || roleMode === "hidden") return true;
+  return false;
+}
+function killerWordText331(){
+  return "Tu n'as pas de mot";
+}
+
+/* Overrides 3.3.1 */
+function launchGame(){
+  if(state.players.length!==state.setup.count) return alert("Sélectionne tous les joueurs.");
+  const pair = pickPairBalanced331();
+  let killerCount = +state.setup.killers || 1;
+  if(state.setup.gameMode === "double" && state.players.length >= 6) killerCount = 2;
+
+  const ids = state.players.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0,killerCount);
+  state.game = {
+    id:Date.now(),
+    pair,
+    round:0,
+    winner:null,
+    votes:{},
+    starter:null,
+    roleMode:state.setup?.roleMode||"visible",
+    gameMode:state.setup?.gameMode||"classic",
+    gameModeName:(state.selectedMode?.name)||"Classique",
+    discussionMinutes:state.setup?.minutes||3,
+    players:state.players.map((n,i)=>({name:n,role:ids.includes(i)?"killer":"survivor",alive:true}))
+  };
+  state.game.starter = state.game.players[Math.floor(Math.random()*state.game.players.length)].name;
+  revealPass(0);
+}
+
+function revealWord(i){
+  try{
+    if(!state || !state.game || !state.game.players || !state.game.players[i]){
+      revealPass(i+1);
+      return;
+    }
+    try{ sound("reveal"); }catch(e){}
+
+    const gp = state.game.players[i];
+    const pair = state.game.pair || ["Mot","Mot"];
+    const hiddenMode = state.game.roleMode === "hidden";
+    const isKiller = gp.role === "killer";
+    const killerHasWord = killerGetsWord331();
+
+    let word = pair[0];
+    if(isKiller) word = killerHasWord ? pair[1] : killerWordText331();
+
+    const roleTitle = hiddenMode ? "🎴 Ton mot" : (isKiller ? "🔪 Tueur" : "🛡️ Survivant");
+    const helper = hiddenMode
+      ? "Personne ne voit son rôle dans ce mode. Retenez seulement votre mot."
+      : (isKiller && !killerHasWord ? "Tu es l'imposteur. Tu dois deviner le thème avec les indices des autres." : "Retenez bien votre rôle et votre mot.");
+    const wordClass = isKiller && !killerHasWord ? "no-word-card" : "";
+
+    screen(`<div class="card mobile-center-card">
+      <h1>${roleTitle}</h1>
+      <div class="logo ${wordClass}" style="font-size:38px">${word}</div>
+      <p class="small">${helper}</p>
+      <button class="btn" onclick="revealPass(${i+1})">Cacher et passer</button>
+    </div>`);
+  }catch(err){
+    console.error("revealWord 3.3.1 error", err);
+    revealPass(i+1);
+  }
+}
+
+
+
+/* =========================================================
+   MORDRA 3.3.2 — RANDOM KILLER FIX
+   Tirage vraiment aléatoire du ou des Tueurs.
+========================================================= */
+
+function secureShuffle332(list){
+  const arr = list.slice();
+  const random = () => {
+    try{
+      if(window.crypto && window.crypto.getRandomValues){
+        const x = new Uint32Array(1);
+        window.crypto.getRandomValues(x);
+        return x[0] / 4294967296;
+      }
+    }catch(e){}
+    return Math.random();
+  };
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(random()*(i+1));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr;
+}
+
+function pickRandomKillers332(playerNames,killerCount){
+  const indexes = playerNames.map((_,i)=>i);
+  const shuffled = secureShuffle332(indexes);
+  return shuffled.slice(0, Math.max(1, Math.min(killerCount, Math.max(1, playerNames.length-1))));
+}
+
+function launchGame(){
+  if(state.players.length!==state.setup.count) return alert("Sélectionne tous les joueurs.");
+
+  const pair = (typeof pickPairBalanced331 === "function")
+    ? pickPairBalanced331()
+    : words[Math.floor(Math.random()*words.length)];
+
+  let killerCount = +state.setup.killers || 1;
+  if(state.setup.gameMode === "double" && state.players.length >= 6){
+    killerCount = 2;
+  }
+
+  // Tirage totalement aléatoire : aucun ordre, aucune rotation.
+  const ids = pickRandomKillers332(state.players, killerCount);
+
+  state.game = {
+    id:Date.now(),
+    pair,
+    round:0,
+    winner:null,
+    votes:{},
+    starter:null,
+    roleMode:state.setup?.roleMode||"visible",
+    gameMode:state.setup?.gameMode||"classic",
+    gameModeName:(state.selectedMode?.name)||"Classique",
+    discussionMinutes:state.setup?.minutes||3,
+    players:state.players.map((n,i)=>({
+      name:n,
+      role:ids.includes(i) ? "killer" : "survivor",
+      alive:true
+    }))
+  };
+
+  state.game.starter = secureShuffle332(state.game.players)[0].name;
+  revealPass(0);
+}
+
+
+/* =========================================================
+   MORDRA Test 4.00 — MODE CHAMPIONNAT
+   Intégré sur la vraie base 3.3.2 Random Killer Fix.
+========================================================= */
+const MORDRA_VERSION_400 = "Test 4.00";
+const CHAMPIONSHIP_SAVE_KEY_400 = "mordra_400_championship";
+
+function vibrate400(pattern=60){
+  try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+}
+function champSound400(type="click"){
+  try{ sound(type); }catch(e){}
+}
+function champSave400(){
+  try{ localStorage.setItem(CHAMPIONSHIP_SAVE_KEY_400, JSON.stringify(state.championship || null)); }catch(e){}
+}
+function champClear400(){
+  try{ localStorage.removeItem(CHAMPIONSHIP_SAVE_KEY_400); }catch(e){}
+}
+function champSafeName400(name){
+  return String(name||"").replaceAll("'","\\'");
+}
+function ensureChampState400(){
+  if(!state.championship){
+    state.championship = {active:false,pending:false,totalRounds:0,currentRound:1,players:[],scores:{},shards:{},setup:null,mode:null,lastRewards:[],chestsClaimed:{}};
+  }
+  return state.championship;
+}
+function championshipMenu400(){
+  try{ clearDiscussionTimer(); }catch(e){}
+  champSound400("menu");
+  const existing = ensureChampState400();
+  const resume = existing.active ? `<button class="btn" onclick="championshipRoundResult400()">▶️ Reprendre le championnat</button>` : "";
+  screen(`<div class="card championship-card">${back("home()")}
+    <div class="champion-crown">🏆</div>
+    <h1>Mode Championnat</h1>
+    <p class="small">Choisis la durée. Les mêmes joueurs, le même mode et les mêmes paramètres restent pendant toutes les manches.</p>
+    ${resume}
+    <div class="championship-grid">
+      <button class="btn" onclick="prepareChampionship400(1)">1 manche</button>
+      <button class="btn" onclick="prepareChampionship400(3)">3 manches</button>
+      <button class="btn" onclick="prepareChampionship400(5)">5 manches</button>
+      <button class="btn" onclick="prepareChampionship400(10)">10 manches</button>
+      <button class="btn" onclick="prepareChampionship400(15)">15 manches</button>
+    </div>
+    <p class="small">Version ${MORDRA_VERSION_400} — système en test.</p>
+  </div>`);
+}
+function prepareChampionship400(rounds){
+  state.championship = {active:false,pending:true,totalRounds:rounds,currentRound:1,players:[],scores:{},shards:{},setup:null,mode:null,lastRewards:[],chestsClaimed:{}};
+  champSave400();
+  champSound400("level");
+  vibrate400([70,40,70]);
+  modeSelect();
+}
+function championshipStartFromLaunch400(){
+  const c=ensureChampState400();
+  if(!c.pending || c.active) return;
+  c.active = true;
+  c.pending = false;
+  c.currentRound = 1;
+  c.players = state.players.slice();
+  c.setup = {...state.setup};
+  c.mode = state.selectedMode ? {...state.selectedMode} : {...mordraModes.classic};
+  c.scores = {};
+  c.shards = {};
+  c.lastRewards = [];
+  c.players.forEach(n=>{ c.scores[n]=0; c.shards[n]=0; });
+  champSave400();
+}
+function championshipRanking400(){
+  const c=ensureChampState400();
+  return (c.players||[]).map(n=>({name:n,score:c.scores?.[n]||0,shards:c.shards?.[n]||0}))
+    .sort((a,b)=>b.score-a.score || b.shards-a.shards || a.name.localeCompare(b.name));
+}
+function championshipAfterSavedGame400(rewards, rewardHtml, oldM, newM){
+  const c=ensureChampState400();
+  const winnerSide = state.game?.winner;
+  c.lastRewards = rewards || [];
+  c.players.forEach(n=>{ c.scores[n] ||= 0; c.shards[n] ||= 0; });
+  (state.game?.players||[]).forEach(gp=>{
+    const win = (gp.role==="killer" && winnerSide==="killers") || (gp.role==="survivor" && winnerSide==="survivors");
+    const bonus = gp.role==="killer" ? 5 : 3;
+    if(win) c.scores[gp.name] = (c.scores[gp.name]||0) + bonus;
+    const r=(rewards||[]).find(x=>x.name===gp.name);
+    if(r) c.shards[gp.name] = (c.shards[gp.name]||0) + (r.shards||0);
+  });
+  champSave400();
+  champSound400("level");
+  vibrate400([60,30,60]);
+  championshipRoundResult400(rewardHtml, oldM, newM);
+}
+function championshipRoundResult400(rewardHtml="", oldM=null, newM=null){
+  const c=ensureChampState400();
+  const ranking=championshipRanking400();
+  const isFinal = c.currentRound >= c.totalRounds;
+  const rows = ranking.map((p,i)=>`<div class="champ-ranking-row" style="animation-delay:${i*0.10}s"><b>${i+1}. ${i===0?"👑 ":""}${p.name}</b><span>${p.score} pts • ${p.shards} 🩸</span></div>`).join("");
+  const nextButton = isFinal
+    ? `<button class="btn" onclick="championshipFinal400()">Voir le champion</button>`
+    : `<button class="btn" onclick="championshipNextRound400()">Manche suivante</button>`;
+  screen(`<div class="card championship-card"><h1>🏁 Manche ${c.currentRound} / ${c.totalRounds}</h1>
+    <p class="small">Résultat sauvegardé. Le classement du championnat est mis à jour.</p>
+    <div class="champ-round-badge">${state.game?.winner==="killers"?"🔪 Victoire des Tueurs":"🛡️ Victoire des Survivants"}</div>
+    ${rewardHtml?`<h2>Récompenses de manche</h2>${rewardHtml}`:""}
+    ${oldM&&newM&&oldM!==newM?`<div class="mvp-card player-card"><div class="mvp-badge">👑 Nouveau MVP</div><h1>${newM}</h1></div>`:""}
+    <h2>Classement championnat</h2>
+    <div class="champ-ranking-box">${rows}</div>
+    ${nextButton}
+    <button class="btn secondary" onclick="showVictoryChest()">${championshipChestAlreadyClaimed400()?"✅ Coffre déjà récupéré":"🎁 Coffre de victoire"}</button>
+    <button class="btn danger" onclick="quitChampionship400()">Abandonner le championnat</button>
+  </div>`);
+}
+function championshipNextRound400(){
+  const c=ensureChampState400();
+  if(!c.active) return championshipMenu400();
+  c.currentRound++;
+  state.players = c.players.slice();
+  state.setup = {...c.setup};
+  state.selectedMode = c.mode ? {...c.mode} : mordraModes.classic;
+  state.game = null;
+  champSave400();
+  champSound400("click");
+  vibrate400(60);
+  launchGame();
+}
+function championshipFinal400(){
+  const c=ensureChampState400();
+  const ranking=championshipRanking400();
+  const champion=ranking[0];
+  c.active=false;
+  c.pending=false;
+  champSave400();
+  champSound400("level");
+  vibrate400([100,50,100,50,160]);
+  const rows=ranking.map((p,i)=>`<div class="champ-ranking-row" style="animation-delay:${i*0.10}s"><b>${i+1}. ${i===0?"🏆 ":""}${p.name}</b><span>${p.score} pts • ${p.shards} 🩸</span></div>`).join("");
+  screen(`<div class="card championship-card champion-final"><div class="champion-crown">🏆</div>
+    <h1>Champion de MORDRA</h1>
+    <div class="champion-name">${champion ? champion.name : "Aucun champion"}</div>
+    <p class="xp">${champion ? `${champion.score} points • ${champion.shards} 🩸 gagnés pendant le championnat` : ""}</p>
+    <h2>Classement final</h2>
+    <div class="champ-ranking-box">${rows}</div>
+    <button class="btn" onclick="restartSameChampionship400()">Rejouer le même championnat</button>
+    <button class="btn secondary" onclick="championshipMenu400()">Nouveau championnat</button>
+    <button class="btn ghost" onclick="home()">Menu principal</button>
+  </div>`);
+}
+function restartSameChampionship400(){
+  const old=ensureChampState400();
+  const rounds=old.totalRounds || 3;
+  const players=(old.players||[]).slice();
+  const setup=old.setup ? {...old.setup} : null;
+  const mode=old.mode ? {...old.mode} : mordraModes.classic;
+  if(!players.length || !setup) return prepareChampionship400(rounds);
+  state.championship = {active:true,pending:false,totalRounds:rounds,currentRound:1,players,scores:{},shards:{},setup,mode,lastRewards:[],chestsClaimed:{}};
+  players.forEach(n=>{ state.championship.scores[n]=0; state.championship.shards[n]=0; });
+  state.players=players.slice(); state.setup={...setup}; state.selectedMode={...mode}; state.game=null;
+  champSave400();
+  launchGame();
+}
+function quitChampionship400(){
+  if(!confirm("Abandonner le championnat en cours ?")) return;
+  state.championship = {active:false,pending:false,totalRounds:0,currentRound:1,players:[],scores:{},shards:{},setup:null,mode:null,lastRewards:[],chestsClaimed:{}};
+  champClear400();
+  home();
+}
+
+/* Override propre du lancement pour activer le championnat sans casser le random killer fix. */
+const launchGame_332_original_for_400 = launchGame;
+launchGame = function(){
+  championshipStartFromLaunch400();
+  launchGame_332_original_for_400();
+};
+
+/* Reprise auto si un championnat était en cours sur le même téléphone. */
+try{
+  const savedChamp400 = JSON.parse(localStorage.getItem(CHAMPIONSHIP_SAVE_KEY_400) || "null");
+  if(savedChamp400 && typeof savedChamp400 === "object") state.championship = savedChamp400;
+}catch(e){}
+
+
+
+/* =========================================================
+   MORDRA Test 4.00 — TOUR SUPPLÉMENTAIRE 2 MINUTES
+   Si le ou les Tueurs ne sont pas encore trouvés, on ne lance
+   pas un vote direct : on relance la même manche avec 2 minutes
+   de discussion, puis le vote revient automatiquement.
+========================================================= */
+
+function extraRoundDiscussion400(reasonText){
+  try{
+    clearDiscussionTimer();
+    if(!state || !state.game || !state.game.players){
+      home();
+      return;
+    }
+
+    state.game.votes = {};
+    state.game.extraTurns = (state.game.extraTurns || 0) + 1;
+
+    const alivePlayers = state.game.players.filter(p=>p.alive!==false);
+    const pool = alivePlayers.length ? alivePlayers : state.game.players;
+    const starter = pool[Math.floor(Math.random()*pool.length)]?.name || state.game.starter || "Un joueur";
+    state.game.starter = starter;
+
+    const totalSeconds = 120;
+    try{ sound("vote"); }catch(e){}
+    try{ if(navigator.vibrate) navigator.vibrate([80,40,80]); }catch(e){}
+
+    screen(`<div class="card mobile-center-card extra-round-card">
+      <h1>🔁 Tour supplémentaire</h1>
+      <p class="small">${reasonText || "Le Tueur n'a pas encore été trouvé."}</p>
+
+      <div class="discussion-timer-box" id="discussionTimerBox">
+        <span class="small">Temps bonus pour refaire un tour</span>
+        <b id="discussionTimer">${formatDiscussionTime(totalSeconds)}</b>
+        <small id="discussionTimerSub">Parlez, défendez-vous, puis revotez.</small>
+      </div>
+
+      <div class="result-line"><b>🎙️ ${starter} relance le débat</b><br><span class="small">Même manche, mêmes rôles, aucun retour au menu.</span></div>
+      <button class="btn" onclick="clearDiscussionTimer(); votePass(0)">Revoter maintenant</button>
+    </div>`);
+
+    startDiscussionTimer(totalSeconds);
+  }catch(err){
+    console.error("extraRoundDiscussion400 error", err);
+    screen(`<div class="card mobile-center-card">
+      <h1>🔁 Tour supplémentaire</h1>
+      <p class="small">Le Tueur n'a pas encore été trouvé. Reprenez le débat puis revotez.</p>
+      <button class="btn" onclick="state.game.votes={}; votePass(0)">Revoter</button>
+    </div>`);
+  }
+}
+
+/* Override vote : plus de vote direct ou écran bizarre quand le Tueur n'est pas trouvé. */
+resolveVote = function(){
+  try{
+    const game = state.game;
+    if(!game || !game.players) return home();
+
+    const aliveBefore = game.players.filter(p=>p.alive!==false);
+    let counts = {};
+    Object.values(game.votes || {}).forEach(v=>{
+      if(v !== undefined && v !== null) counts[v] = (counts[v] || 0) + 1;
+    });
+
+    const vals = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+
+    if(!vals.length){
+      return showVerdictResultThen(()=>extraRoundDiscussion400("Aucun vote n'a été validé. On reprend 2 minutes pour clarifier."));
+    }
+
+    if(vals.length > 1 && vals[0][1] === vals[1][1]){
+      return showVerdictResultThen(()=>extraRoundDiscussion400("Égalité dans les votes. Aucun joueur n'est éliminé. Vous avez 2 minutes pour refaire un tour."));
+    }
+
+    const elim = Number(vals[0][0]);
+    if(!game.players[elim]){
+      return showVerdictResultThen(()=>extraRoundDiscussion400("Vote invalide. On relance la même manche pendant 2 minutes."));
+    }
+
+    game.players[elim].alive = false;
+
+    const aliveKillers = game.players.filter(p=>p.alive!==false && p.role==="killer").length;
+    const aliveSurv = game.players.filter(p=>p.alive!==false && p.role==="survivor").length;
+
+    if(aliveKillers === 0) game.winner = "survivors";
+    else if(aliveKillers >= aliveSurv) game.winner = "killers";
+
+    if(game.winner){
+      return showVerdictResultThen(()=>endGame());
+    }
+
+    const eliminated = game.players[elim];
+    const reason = eliminated.role === "killer"
+      ? `${eliminated.name} était Tueur, mais il en reste encore un. Vous avez 2 minutes pour finir la manche.`
+      : `${eliminated.name} n'était pas Tueur. Le vrai Tueur est encore en jeu. Vous avez 2 minutes pour refaire un tour.`;
+
+    showVerdictResultThen(()=>extraRoundDiscussion400(reason));
+  }catch(err){
+    console.error("resolveVote extra round override error", err);
+    try{ extraRoundDiscussion400("Petit problème pendant le vote. On relance proprement la même manche pendant 2 minutes."); }catch(e){ home(); }
+  }
+};

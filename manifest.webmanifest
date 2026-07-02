@@ -1,5 +1,5 @@
 {
-  "name": "MORDRA 3.2 Victory Chests",
+  "name": "MORDRA Test 4.00",
   "short_name": "MORDRA",
   "start_url": "./index.html",
   "scope": "./",
@@ -24,5 +24,5 @@
       "type": "image/png"
     }
   ],
-  "description": "Coffres de victoire équilibrés pour le meilleur joueur gagnant."
+  "description": "Mode Championnat Test 4.00 avec tirage aléatoire, classement et récompenses."
 }

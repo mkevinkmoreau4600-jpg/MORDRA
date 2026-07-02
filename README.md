@@ -1,3 +1,30 @@
+# MORDRA 3.3.2 — RANDOM KILLER FIX
+
+Mise à jour joueurs / rôles.
+
+## Corrigé
+- Le Tueur est tiré totalement aléatoirement à chaque partie.
+- Aucun ordre fixe.
+- Aucun système de joueur de gauche.
+- Le même joueur peut être Tueur plusieurs fois de suite.
+- Un autre joueur peut aussi être Tueur plusieurs fois de suite.
+- Le futur mode Double Tueur utilise aussi un tirage aléatoire.
+- Le joueur qui commence à parler est aussi choisi aléatoirement.
+
+# MORDRA 3.3.1 — WORD BALANCE FIX
+
+Mise à jour basée sur vos vrais tests de partie.
+
+## Corrigé / Ajouté
+- En mode Classique, le Tueur n'a plus de mot.
+- En mode Blitz, le Tueur n'a plus de mot.
+- En mode Mystère, le Tueur garde un mot proche, car personne ne voit son rôle.
+- Anti-répétition renforcé.
+- Le jeu évite de ressortir les mêmes paires trop rapidement.
+- Le jeu évite l'inversion directe d'une paire déjà jouée.
+- Les paires trop proches ressortent moins souvent.
+- Meilleur équilibre pour les parties à 3 ou 4 joueurs.
+
 # MORDRA 3.2 — VICTORY CHESTS
 
 Grosse mise à jour de récompense.
@@ -232,3 +259,30 @@ Remettre le jeu sur une base stable :
 
 ## Important
 Cette version privilégie la stabilité. Certains systèmes avancés pourront être enrichis ensuite.
+
+
+## MORDRA Test 4.00
+- Mode Championnat intégré sur la vraie base 3.3.2 RANDOM KILLER FIX.
+- Durées : 1, 3, 5, 10 ou 15 manches.
+- Même groupe, même mode et mêmes paramètres entre les manches.
+- Classement, scores, récompenses, animations, vibrations et reprise locale.
+
+
+## Test 4.00 — Accueil officiel
+- Image d'accueil intégrée comme fond réel, sans recréation en code.
+- Bouton invisible par-dessus DÉMARRER.
+- Menu principal complet : Nouvelle partie, Championnat, Progression, Statistiques, Succès, Collection, Boutique, Paramètres.
+- Brouillard animé, particules rouges et glow respirant.
+
+
+## Mise à jour Chargement Premium V2
+- Durée cinématique environ 12 secondes.
+- Progression non linéaire avec pauses visuelles.
+- Transition finale fluide vers le menu principal.
+
+
+## Mise à jour Audio UI finale
+- Bouton 🔊/🔇 retiré du menu principal.
+- Sons intégrés : DÉMARRER, clic général, retour, élément verrouillé.
+- Les sons respectent la jauge Effets sonores.
+- Les éléments Bientôt ont un feedback sonore + shake + toast.
